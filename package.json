@@ -1,0 +1,122 @@
+{
+  "name": "@content-extractor/core",
+  "version": "1.0.0",
+  "description": "A powerful, flexible content extraction library for web pages with support for multiple extraction engines, site-specific adapters, and content analysis",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm run test",
+    "release": "changeset publish"
+  },
+  "keywords": [
+    "content-extraction",
+    "web-scraping",
+    "readability",
+    "content-parser",
+    "article-extraction",
+    "text-extraction",
+    "web-content",
+    "html-parser",
+    "content-analysis",
+    "nlp"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/content-extractor"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/content-extractor/issues"
+  },
+  "homepage": "https://github.com/yourusername/content-extractor#readme",
+  "dependencies": {
+    "@mozilla/readability": "^0.5.0",
+    "cheerio": "^1.0.0-rc.12",
+    "jsdom": "^24.0.0",
+    "natural": "^6.10.4",
+    "sentiment": "^5.0.2",
+    "franc": "^6.2.0",
+    "compromise": "^14.13.0",
+    "lru-cache": "^10.2.0",
+    "keyv": "^4.5.4",
+    "image-size": "^1.1.1",
+    "probe-image-size": "^7.2.3",
+    "file-type": "^19.0.0",
+    "sanitize-html": "^2.12.1",
+    "normalize-url": "^8.0.0",
+    "is-url": "^1.2.4",
+    "get-urls": "^12.1.0",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0",
+    "jsonld": "^8.3.2",
+    "microdata-node": "^3.0.0",
+    "schema-dts": "^1.1.2",
+    "zod": "^3.22.4",
+    "crypto-js": "^4.2.0",
+    "dompurify": "^3.0.9",
+    "isomorphic-dompurify": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "@types/cheerio": "^0.22.35",
+    "@types/natural": "^5.1.5",
+    "@types/sanitize-html": "^2.11.0",
+    "@types/crypto-js": "^4.2.2",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "@vitest/coverage-v8": "^1.2.2",
+    "@vitest/ui": "^1.2.2",
+    "@changesets/cli": "^2.27.1",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.2.5",
+    "tsup": "^8.0.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.2"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.5.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": [
+      "cjs",
+      "esm"
+    ],
+    "dts": true,
+    "splitting": false,
+    "sourcemap": true,
+    "clean": true,
+    "minify": true
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

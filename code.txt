@@ -1,0 +1,4216 @@
+// src/types/index.ts
+export interface ExtractedContent {
+  title: string;
+  paragraphs: Paragraph[];
+  cleanText: string;
+  metadata: ContentMetadata;
+  sections: Section[];
+  readingTime: number;
+  wordCount: number;
+  language: string;
+  tables?: Table[];
+  lists?: List[];
+  embeds?: Embed[];
+  structuredData?: StructuredData[];
+  quality: ContentQuality;
+  fingerprint: string;
+}
+
+export interface Paragraph {
+  id: string;
+  text: string;
+  html: string;
+  index: number;
+  element: string;
+  bounds: DOMRect;
+  section?: string;
+  isQuote: boolean;
+  isCode: boolean;
+  isHeading: boolean;
+  headingLevel?: number;
+  importance: number;
+  sentiment?: number;
+  keywords?: string[];
+  entities?: Entity[];
+  language?: string;
+  readability?: ReadabilityScore;
+}
+
+export interface Table {
+  id: string;
+  headers: string[];
+  rows: string[][];
+  caption?: string;
+  element: string;
+  index: number;
+}
+
+export interface List {
+  id: string;
+  type: 'ordered' | 'unordered' | 'definition';
+  items: ListItem[];
+  element: string;
+  index: number;
+}
+
+export interface ListItem {
+  text: string;
+  html: string;
+  subItems?: ListItem[];
+  depth: number;
+}
+
+export interface Embed {
+  id: string;
+  type: 'video' | 'audio' | 'iframe' | 'tweet' | 'instagram' | 'codepen' | 'other';
+  url: string;
+  title?: string;
+  provider?: string;
+  thumbnailUrl?: string;
+  element: string;
+  index: number;
+}
+
+export interface StructuredData {
+  type: 'json-ld' | 'microdata' | 'rdfa' | 'opengraph';
+  data: any;
+  context?: string;
+}
+
+export interface ContentQuality {
+  score: number;
+  textDensity: number;
+  linkDensity: number;
+  adDensity: number;
+  readabilityScore: number;
+  structureScore: number;
+  completeness: number;
+}
+
+export interface ReadabilityScore {
+  fleschKincaid: number;
+  gunningFog: number;
+  avgSentenceLength: number;
+  avgWordLength: number;
+  complexWords: number;
+}
+
+export interface Entity {
+  text: string;
+  type: 'person' | 'organization' | 'location' | 'date' | 'money' | 'other';
+  confidence: number;
+  metadata?: Record<string, any>;
+}
+
+export interface Section {
+  id: string;
+  title: string;
+  paragraphs: Paragraph[];
+  level: number;
+  startIndex: number;
+  endIndex: number;
+  summary?: string;
+  keywords?: string[];
+  subSections?: Section[];
+}
+
+export interface ContentMetadata {
+  author?: string;
+  authors?: string[];
+  publishDate?: Date;
+  updateDate?: Date;
+  category?: string;
+  categories?: string[];
+  tags: string[];
+  description?: string;
+  imageUrl?: string;
+  images?: ImageMetadata[];
+  source: string;
+  extractedAt: Date;
+  publisher?: string;
+  copyright?: string;
+  license?: string;
+  wordCount?: number;
+  estimatedReadTime?: number;
+  socialMetadata?: SocialMetadata;
+}
+
+export interface ImageMetadata {
+  url: string;
+  alt?: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+  type?: string;
+}
+
+export interface SocialMetadata {
+  twitter?: {
+    card?: string;
+    site?: string;
+    creator?: string;
+  };
+  openGraph?: {
+    type?: string;
+    locale?: string;
+    siteName?: string;
+  };
+}
+
+export interface SiteAdapter {
+  name: string;
+  patterns: RegExp[];
+  priority?: number;
+  extract(doc: Document, url: string): Partial<ExtractedContent>;
+  cleanContent?(content: string): string;
+  detectParagraphs?(doc: Document): Paragraph[];
+  detectTables?(doc: Document): Table[];
+  detectLists?(doc: Document): List[];
+  detectEmbeds?(doc: Document): Embed[];
+  extractStructuredData?(doc: Document): StructuredData[];
+  validateContent?(content: ExtractedContent): boolean;
+}
+
+export interface CleaningOptions {
+  removeAds: boolean;
+  removeNavigation: boolean;
+  removeComments: boolean;
+  removeRelated: boolean;
+  removeFooters: boolean;
+  removeSidebars: boolean;
+  preserveImages: boolean;
+  preserveVideos: boolean;
+  preserveIframes: boolean;
+  removePopups: boolean;
+  removeCookieBanners: boolean;
+  removeNewsletterSignups: boolean;
+  preserveTables: boolean;
+  preserveLists: boolean;
+  preserveEmbeds: boolean;
+  aggressiveMode: boolean;
+  customSelectors?: {
+    remove?: string[];
+    preserve?: string[];
+  };
+}
+
+export interface ExtractionOptions {
+  adapter?: string;
+  cleaningOptions?: Partial<CleaningOptions>;
+  minParagraphLength?: number;
+  includeMetadata?: boolean;
+  detectSections?: boolean;
+  scoreParagraphs?: boolean;
+  extractTables?: boolean;
+  extractLists?: boolean;
+  extractEmbeds?: boolean;
+  extractStructuredData?: boolean;
+  extractEntities?: boolean;
+  calculateReadability?: boolean;
+  generateSummary?: boolean;
+  maxDepth?: number;
+  timeout?: number;
+  lazy?: boolean;
+  waitForSelectors?: string[];
+  customExtractors?: CustomExtractor[];
+}
+
+export interface CustomExtractor {
+  name: string;
+  selector: string;
+  extract: (element: Element) => any;
+  transform?: (data: any) => any;
+}
+
+export interface ExtractionEvents {
+  onStart?: () => void;
+  onProgress?: (progress: ExtractionProgress) => void;
+  onComplete?: (content: ExtractedContent) => void;
+  onError?: (error: Error) => void;
+}
+
+export interface ExtractionProgress {
+  phase: 'fetching' | 'parsing' | 'cleaning' | 'extracting' | 'analyzing';
+  progress: number;
+  message?: string;
+}
+
+export interface CacheOptions {
+  enabled: boolean;
+  ttl: number;
+  maxSize: number;
+  strategy: 'lru' | 'lfu' | 'fifo';
+  persistent: boolean;
+}
+
+export interface ContentExtractorPlugin {
+  name: string;
+  version: string;
+  init?: () => Promise<void>;
+  beforeExtract?: (doc: Document, options: ExtractionOptions) => Document;
+  afterExtract?: (content: ExtractedContent) => ExtractedContent;
+  extractors?: Record<string, (doc: Document) => any>;
+}
+
+export type ExtractionResult<T = ExtractedContent> =
+  | { success: true; data: T }
+  | { success: false; error: Error; partial?: Partial<T> };
+
+export interface StreamingOptions extends ExtractionOptions {
+  stream?: boolean;
+  chunkSize?: number;
+  onProgress?: (chunk: Partial<ExtractedContent>) => void;
+}
+
+export interface BatchOptions {
+  parallel?: number;
+  retryFailed?: boolean;
+  continueOnError?: boolean;
+}
+
+
+
+// src/core/content-extractor-service.ts
+import { LRUCache } from 'lru-cache';
+import { JSDOM } from 'jsdom';
+import crypto from 'crypto-js';
+import { TextExtractor } from '../extractors/text-extractor';
+import { getSiteAdapter } from '../adapters';
+import type {
+  CacheOptions,
+  ContentExtractorPlugin,
+  ExtractedContent,
+  ExtractionEvents,
+  ExtractionOptions,
+  ExtractionResult,
+  StreamingOptions,
+  BatchOptions
+} from '../types';
+
+class RateLimiter {
+  private requests: Map<string, number[]> = new Map();
+  private maxRequests: number;
+  private windowMs: number;
+
+  constructor(maxRequests: number = 10, windowMs: number = 60000) {
+    this.maxRequests = maxRequests;
+    this.windowMs = windowMs;
+  }
+
+  async checkLimit(key: string): Promise<boolean> {
+    const now = Date.now();
+    const requests = this.requests.get(key) || [];
+    const validRequests = requests.filter((time) => now - time < this.windowMs);
+
+    if (validRequests.length >= this.maxRequests) {
+      return false;
+    }
+
+    validRequests.push(now);
+    this.requests.set(key, validRequests);
+    return true;
+  }
+
+  getRemainingRequests(key: string): number {
+    const now = Date.now();
+    const requests = this.requests.get(key) || [];
+    const validRequests = requests.filter((time) => now - time < this.windowMs);
+    return Math.max(0, this.maxRequests - validRequests.length);
+  }
+}
+
+export class ContentExtractorService {
+  private extractor: TextExtractor;
+  private cache: LRUCache<string, { content: ExtractedContent; timestamp: number }>;
+  private plugins: ContentExtractorPlugin[] = [];
+  private defaultCacheOptions: CacheOptions = {
+    enabled: true,
+    ttl: 3600000, // 1 hour
+    maxSize: 50, // 50 MB
+    strategy: 'lru',
+    persistent: false
+  };
+  private cacheOptions: CacheOptions;
+  private pendingExtractions: Map<string, Promise<ExtractedContent>> = new Map();
+  private rateLimiter: RateLimiter;
+  private cacheHits: number = 0;
+  private cacheMisses: number = 0;
+  private persistentCache?: Map<string, any>;
+
+  constructor(cacheOptions?: Partial<CacheOptions>) {
+    this.extractor = new TextExtractor();
+    this.cacheOptions = { ...this.defaultCacheOptions, ...cacheOptions };
+    this.cache = new LRUCache({
+      max: 100,
+      ttl: this.cacheOptions.ttl,
+      sizeCalculation: (value) => JSON.stringify(value).length,
+      maxSize: this.cacheOptions.maxSize * 1024 * 1024, // Convert MB to bytes
+    });
+    this.rateLimiter = new RateLimiter();
+
+    if (this.cacheOptions.persistent) {
+      this.persistentCache = new Map();
+    }
+  }
+
+  async registerPlugin(plugin: ContentExtractorPlugin): Promise<void> {
+    if (plugin.init) {
+      await plugin.init();
+    }
+    this.plugins.push(plugin);
+    console.log(`Registered plugin: ${plugin.name} v${plugin.version}`);
+  }
+
+  unregisterPlugin(pluginName: string): void {
+    this.plugins = this.plugins.filter((p) => p.name !== pluginName);
+  }
+
+  getPlugins(): ContentExtractorPlugin[] {
+    return [...this.plugins];
+  }
+
+  async extract(
+    url: string,
+    options?: ExtractionOptions,
+    events?: ExtractionEvents
+  ): Promise<ExtractionResult> {
+    try {
+      const domain = new URL(url).hostname;
+      if (!(await this.rateLimiter.checkLimit(domain))) {
+        throw new Error(`Rate limit exceeded for ${domain}. Try again later.`);
+      }
+
+      events?.onStart?.();
+
+      const pendingKey = `${url}_${JSON.stringify(options || {})}`;
+      if (this.pendingExtractions.has(pendingKey)) {
+        const content = await this.pendingExtractions.get(pendingKey)!;
+        return { success: true, data: content };
+      }
+
+      const extractionPromise = this._extract(url, options, events);
+      this.pendingExtractions.set(pendingKey, extractionPromise);
+
+      try {
+        const content = await extractionPromise;
+        events?.onComplete?.(content);
+        return { success: true, data: content };
+      } finally {
+        this.pendingExtractions.delete(pendingKey);
+      }
+    } catch (error) {
+      events?.onError?.(error as Error);
+      return {
+        success: false,
+        error: error as Error,
+        partial: undefined
+      };
+    }
+  }
+
+  async extractFromCurrentTab(
+    options?: ExtractionOptions,
+    events?: ExtractionEvents
+  ): Promise<ExtractionResult> {
+    try {
+      if (typeof window === 'undefined') {
+        throw new Error('extractFromCurrentTab is only available in browser environment');
+      }
+      const html = document.documentElement.outerHTML;
+      const url = window.location.href;
+      return this.extractFromHTML(html, url, options, events);
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  }
+
+  async extractFromDocument(
+    document: Document,
+    url: string,
+    options?: ExtractionOptions,
+    events?: ExtractionEvents
+  ): Promise<ExtractionResult> {
+    try {
+      events?.onStart?.();
+      events?.onProgress?.({ phase: 'extracting', progress: 50 });
+
+      let doc = document;
+
+      for (const plugin of this.plugins) {
+        if (plugin.beforeExtract) {
+          doc = plugin.beforeExtract(doc, options || {});
+        }
+      }
+
+      let content = await this.extractor.extractEnhanced(doc, url, options);
+
+      for (const plugin of this.plugins) {
+        if (plugin.afterExtract) {
+          content = plugin.afterExtract(content);
+        }
+      }
+
+      content.fingerprint = this.generateFingerprint(content);
+
+      events?.onComplete?.(content);
+      return { success: true, data: content };
+    } catch (error) {
+      events?.onError?.(error as Error);
+      return { success: false, error: error as Error };
+    }
+  }
+
+  async extractFromHTML(
+    html: string,
+    url: string,
+    options?: ExtractionOptions,
+    events?: ExtractionEvents
+  ): Promise<ExtractionResult> {
+    try {
+      events?.onStart?.();
+      events?.onProgress?.({ phase: 'parsing', progress: 20 });
+
+      const dom = new JSDOM(html);
+      const doc = dom.window.document;
+      return this.extractFromDocument(doc, url, options, events);
+    } catch (error) {
+      events?.onError?.(error as Error);
+      return { success: false, error: error as Error };
+    }
+  }
+
+  private async _extract(
+    url: string,
+    options?: ExtractionOptions,
+    events?: ExtractionEvents
+  ): Promise<ExtractedContent> {
+    if (this.cacheOptions.enabled) {
+      const cached = await this.getFromCache(url, options);
+      if (cached) {
+        this.cacheHits++;
+        events?.onProgress?.({
+          phase: 'fetching',
+          progress: 100,
+          message: 'Loaded from cache'
+        });
+        return cached;
+      }
+      this.cacheMisses++;
+    }
+
+    events?.onProgress?.({ phase: 'fetching', progress: 10 });
+    const response = await this.fetchWithTimeout(url, options?.timeout || 30000);
+    const html = await response.text();
+
+    events?.onProgress?.({ phase: 'parsing', progress: 30 });
+    const dom = new JSDOM(html);
+    let doc = dom.window.document;
+
+    for (const plugin of this.plugins) {
+      if (plugin.beforeExtract) {
+        doc = plugin.beforeExtract(doc, options || {});
+      }
+    }
+
+    events?.onProgress?.({ phase: 'cleaning', progress: 50 });
+    events?.onProgress?.({ phase: 'extracting', progress: 70 });
+    
+    let content = await this.extractor.extractEnhanced(doc, url, options);
+
+    for (const plugin of this.plugins) {
+      if (plugin.afterExtract) {
+        content = plugin.afterExtract(content);
+      }
+    }
+
+    events?.onProgress?.({ phase: 'analyzing', progress: 90 });
+
+    content.fingerprint = this.generateFingerprint(content);
+
+    if (this.cacheOptions.enabled) {
+      await this.saveToCache(url, options, content);
+    }
+
+    events?.onProgress?.({ phase: 'analyzing', progress: 100 });
+    return content;
+  }
+
+  async extractBatch(
+    urls: string[],
+    options?: ExtractionOptions & BatchOptions,
+    concurrency: number = 3
+  ): Promise<ExtractionResult[]> {
+    const results: ExtractionResult[] = [];
+    const chunks: string[][] = [];
+
+    for (let i = 0; i < urls.length; i += concurrency) {
+      chunks.push(urls.slice(i, i + concurrency));
+    }
+
+    for (const chunk of chunks) {
+      const chunkResults = await Promise.all(
+        chunk.map((url) => this.extract(url, options))
+      );
+      results.push(...chunkResults);
+    }
+
+    return results;
+  }
+
+  async *extractStream(
+    url: string,
+    options: StreamingOptions = {}
+  ): AsyncGenerator<Partial<ExtractedContent>, ExtractedContent> {
+    const chunkSize = options.chunkSize || 10;
+    const result = await this.extract(url, options);
+    
+    if (!result.success) {
+      throw result.error;
+    }
+
+    const content = result.data;
+    const totalParagraphs = content.paragraphs.length;
+    
+    for (let i = 0; i < totalParagraphs; i += chunkSize) {
+      const chunk: Partial<ExtractedContent> = {
+        paragraphs: content.paragraphs.slice(i, i + chunkSize),
+        wordCount: content.paragraphs
+          .slice(i, i + chunkSize)
+          .reduce((sum, p) => sum + p.text.split(/\s+/).length, 0)
+      };
+      
+      if (options.onProgress) {
+        options.onProgress(chunk);
+      }
+      
+      yield chunk;
+    }
+    
+    return content;
+  }
+
+  async exportContent(
+    content: ExtractedContent,
+    format: 'json' | 'markdown' | 'html' = 'json'
+  ): Promise<string> {
+    switch (format) {
+      case 'markdown':
+        return this.contentToMarkdown(content);
+      case 'html':
+        return this.contentToHTML(content);
+      default:
+        return JSON.stringify(content, null, 2);
+    }
+  }
+
+  async importContent(
+    data: string,
+    format: 'json' | 'markdown' | 'html' = 'json'
+  ): Promise<ExtractedContent> {
+    switch (format) {
+      case 'json':
+        return JSON.parse(data);
+      default:
+        throw new Error(`Import format ${format} not yet supported`);
+    }
+  }
+
+  private contentToMarkdown(content: ExtractedContent): string {
+    let markdown = `# ${content.title}\n\n`;
+
+    if (content.metadata.author) {
+      markdown += `**Author:** ${content.metadata.author}\n`;
+    }
+    if (content.metadata.publishDate) {
+      markdown += `**Published:** ${new Date(content.metadata.publishDate).toLocaleDateString()}\n`;
+    }
+    markdown += `\n---\n\n`;
+
+    if (content.sections.length > 0) {
+      content.sections.forEach((section) => {
+        markdown += `${'#'.repeat(section.level)} ${section.title}\n\n`;
+        section.paragraphs.forEach((p) => {
+          markdown += `${p.text}\n\n`;
+        });
+      });
+    } else {
+      content.paragraphs.forEach((p) => {
+        if (p.isHeading) {
+          markdown += `${'#'.repeat(p.headingLevel || 2)} ${p.text}\n\n`;
+        } else if (p.isQuote) {
+          markdown += `> ${p.text}\n\n`;
+        } else if (p.isCode) {
+          markdown += `\`\`\`\n${p.text}\n\`\`\`\n\n`;
+        } else {
+          markdown += `${p.text}\n\n`;
+        }
+      });
+    }
+
+    return markdown;
+  }
+
+  private contentToHTML(content: ExtractedContent): string {
+    let html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${content.title}</title>
+</head>
+<body>
+  <article>
+    <h1>${content.title}</h1>`;
+
+    if (content.metadata.author || content.metadata.publishDate) {
+      html += '<div class="metadata">';
+      if (content.metadata.author) {
+        html += `<span class="author">By ${content.metadata.author}</span>`;
+      }
+      if (content.metadata.publishDate) {
+        html += `<time>${new Date(content.metadata.publishDate).toLocaleDateString()}</time>`;
+      }
+      html += '</div>';
+    }
+
+    content.paragraphs.forEach((p) => {
+      html += p.html + '\n';
+    });
+
+    html += `
+  </article>
+</body>
+</html>`;
+
+    return html;
+  }
+
+  private async getFromCache(
+    url: string,
+    options?: ExtractionOptions
+  ): Promise<ExtractedContent | null> {
+    const cacheKey = this.getCacheKey(url, options);
+    const cached = this.cache.get(cacheKey);
+
+    if (cached) {
+      const age = Date.now() - cached.timestamp;
+      if (age < this.cacheOptions.ttl) {
+        return cached.content;
+      }
+    }
+
+    if (this.cacheOptions.persistent && this.persistentCache) {
+      const persistentCached = this.persistentCache.get(cacheKey);
+      if (persistentCached) {
+        const age = Date.now() - persistentCached.timestamp;
+        if (age < this.cacheOptions.ttl) {
+          this.cache.set(cacheKey, persistentCached);
+          return persistentCached.content;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private async saveToCache(
+    url: string,
+    options: ExtractionOptions | undefined,
+    content: ExtractedContent
+  ): Promise<void> {
+    const cacheKey = this.getCacheKey(url, options);
+    const cacheEntry = { content, timestamp: Date.now() };
+
+    this.cache.set(cacheKey, cacheEntry);
+
+    if (this.cacheOptions.persistent && this.persistentCache) {
+      this.persistentCache.set(cacheKey, cacheEntry);
+    }
+  }
+
+  private getCacheKey(url: string, options?: ExtractionOptions): string {
+    const optionsHash = options ? JSON.stringify(options) : 'default';
+    return `${url}_${this.hashString(optionsHash)}`;
+  }
+
+  private hashString(str: string): string {
+    return crypto.SHA256(str).toString();
+  }
+
+  private generateFingerprint(content: ExtractedContent): string {
+    const text = content.cleanText.slice(0, 1000);
+    return this.hashString(text + content.title);
+  }
+
+  private async fetchWithTimeout(
+    url: string,
+    timeout: number
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${timeout}ms`);
+      }
+      throw error;
+    }
+  }
+
+  async clearCache(): Promise<void> {
+    this.cache.clear();
+    this.cacheHits = 0;
+    this.cacheMisses = 0;
+
+    if (this.persistentCache) {
+      this.persistentCache.clear();
+    }
+  }
+
+  getCacheStats(): {
+    size: number;
+    hitRate: number;
+    hits: number;
+    misses: number;
+    itemCount: number;
+  } {
+    const total = this.cacheHits + this.cacheMisses;
+    return {
+      size: this.cache.size,
+      hitRate: total > 0 ? this.cacheHits / total : 0,
+      hits: this.cacheHits,
+      misses: this.cacheMisses,
+      itemCount: this.cache.size
+    };
+  }
+
+  getRateLimitInfo(url: string): { remaining: number; resetTime: number } {
+    const domain = new URL(url).hostname;
+    return {
+      remaining: this.rateLimiter.getRemainingRequests(domain),
+      resetTime: Date.now() + 60000
+    };
+  }
+
+  async findDuplicates(urls: string[]): Promise<Map<string, string[]>> {
+    const fingerprints = new Map<string, string[]>();
+
+    for (const url of urls) {
+      const result = await this.extract(url);
+      if (result.success) {
+        const fp = result.data.fingerprint;
+        if (!fingerprints.has(fp)) {
+          fingerprints.set(fp, []);
+        }
+        fingerprints.get(fp)!.push(url);
+      }
+    }
+
+    const duplicates = new Map<string, string[]>();
+    for (const [fp, urls] of fingerprints) {
+      if (urls.length > 1) {
+        duplicates.set(fp, urls);
+      }
+    }
+
+    return duplicates;
+  }
+
+  validateContent(content: ExtractedContent): {
+    valid: boolean;
+    errors: string[];
+  } {
+    const errors: string[] = [];
+
+    if (!content.title || content.title.length === 0) {
+      errors.push('Missing title');
+    }
+
+    if (!content.paragraphs || content.paragraphs.length === 0) {
+      errors.push('No paragraphs extracted');
+    }
+
+    if (content.wordCount < 50) {
+      errors.push('Content too short (less than 50 words)');
+    }
+
+    if (content.quality.score < 0.3) {
+      errors.push('Content quality too low');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+}
+
+
+// src/extractors/text-extractor.ts
+import { Readability } from '@mozilla/readability';
+import * as cheerio from 'cheerio';
+import { JSDOM } from 'jsdom';
+import { franc } from 'franc';
+import { ContentCleaner } from '../cleaners/content-cleaner';
+import { ParagraphDetector } from '../detectors/paragraph-detector';
+import { getSiteAdapter } from '../adapters';
+import type {
+  ContentMetadata,
+  ContentQuality,
+  Embed,
+  Entity,
+  ExtractedContent,
+  ExtractionOptions,
+  List,
+  ListItem,
+  Paragraph,
+  ReadabilityScore,
+  Section,
+  StructuredData,
+  Table
+} from '../types';
+
+export class TextExtractor {
+  private paragraphDetector: ParagraphDetector;
+  private contentCleaner: ContentCleaner;
+
+  constructor() {
+    this.paragraphDetector = new ParagraphDetector();
+    this.contentCleaner = new ContentCleaner();
+  }
+
+  async extractEnhanced(
+    doc: Document,
+    url: string,
+    options: ExtractionOptions = {}
+  ): Promise<ExtractedContent> {
+    // Try site-specific adapter first
+    const adapter = getSiteAdapter(url);
+    if (adapter && (!options.adapter || options.adapter === adapter.name)) {
+      const adapterResult = adapter.extract(doc, url);
+      if (adapterResult.paragraphs && adapterResult.paragraphs.length > 0) {
+        return this.enhanceExtractedContent(adapterResult, doc, url, options);
+      }
+    }
+
+    // Fallback to Readability
+    const reader = new Readability(doc);
+    const article = reader.parse();
+    
+    if (article) {
+      // Create DOM from Readability content for further processing
+      const contentDom = new JSDOM(article.content);
+      const contentDoc = contentDom.window.document;
+      
+      const paragraphs = await this.extractParagraphsEnhanced(contentDoc, options);
+      const sections = options.detectSections ? this.detectSections(paragraphs) : [];
+      const tables = options.extractTables ? this.extractTables(contentDoc) : undefined;
+      const lists = options.extractLists ? this.extractLists(contentDoc) : undefined;
+      const embeds = options.extractEmbeds ? this.extractEmbeds(contentDoc) : undefined;
+      const structuredData = options.extractStructuredData ? this.extractStructuredData(doc) : undefined;
+      
+      const cleanText = paragraphs.map((p) => p.text).join('\n\n');
+      const wordCount = cleanText.split(/\s+/).filter((w) => w.length > 0).length;
+      const readingTime = Math.ceil(wordCount / 200);
+      
+      const quality = this.calculateQuality(contentDoc, paragraphs, tables, lists);
+      
+      return {
+        title: article.title || this.extractTitle(doc),
+        paragraphs,
+        cleanText,
+        sections,
+        tables,
+        lists,
+        embeds,
+        structuredData,
+        readingTime,
+        wordCount,
+        language: this.detectLanguage(doc, cleanText),
+        quality,
+        fingerprint: '',
+        metadata: options.includeMetadata
+          ? await this.extractMetadataEnhanced(doc, url)
+          : this.getBasicMetadata(url)
+      };
+    }
+
+    // Fallback to generic extraction
+    const cleanedDoc = this.contentCleaner.clean(
+      doc.cloneNode(true) as Document,
+      options.cleaningOptions
+    );
+
+    const paragraphs = await this.extractParagraphsEnhanced(cleanedDoc, options);
+    const sections = options.detectSections ? this.detectSections(paragraphs) : [];
+    const tables = options.extractTables ? this.extractTables(cleanedDoc) : undefined;
+    const lists = options.extractLists ? this.extractLists(cleanedDoc) : undefined;
+    const embeds = options.extractEmbeds ? this.extractEmbeds(cleanedDoc) : undefined;
+    const structuredData = options.extractStructuredData ? this.extractStructuredData(doc) : undefined;
+
+    const cleanText = paragraphs.map((p) => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).filter((w) => w.length > 0).length;
+    const readingTime = Math.ceil(wordCount / 200);
+
+    const quality = this.calculateQuality(cleanedDoc, paragraphs, tables, lists);
+
+    return {
+      title: this.extractTitle(doc),
+      paragraphs,
+      cleanText,
+      sections,
+      tables,
+      lists,
+      embeds,
+      structuredData,
+      readingTime,
+      wordCount,
+      language: this.detectLanguage(doc, cleanText),
+      quality,
+      fingerprint: '',
+      metadata: options.includeMetadata
+        ? await this.extractMetadataEnhanced(doc, url)
+        : this.getBasicMetadata(url)
+    };
+  }
+
+  private async extractParagraphsEnhanced(
+    doc: Document,
+    options: ExtractionOptions
+  ): Promise<Paragraph[]> {
+    const paragraphs = this.paragraphDetector.detect(doc, options);
+
+    if (options.extractEntities || options.calculateReadability) {
+      return Promise.all(
+        paragraphs.map(async (p) => {
+          if (options.extractEntities) {
+            p.entities = this.extractEntities(p.text);
+            p.keywords = this.extractKeywords(p.text);
+          }
+
+          if (options.calculateReadability) {
+            p.readability = this.calculateReadability(p.text);
+          }
+
+          return p;
+        })
+      );
+    }
+
+    return paragraphs;
+  }
+
+  private extractTables(doc: Document): Table[] {
+    const tables: Table[] = [];
+    const tableElements = doc.querySelectorAll('table');
+
+    tableElements.forEach((table, index) => {
+      if (this.isLayoutTable(table)) return;
+
+      const headers = this.extractTableHeaders(table);
+      const rows = this.extractTableRows(table);
+      const caption = table.querySelector('caption')?.textContent?.trim();
+
+      if (headers.length > 0 || rows.length > 0) {
+        tables.push({
+          id: `table-${index}`,
+          headers,
+          rows,
+          caption,
+          element: this.getSelector(table),
+          index
+        });
+      }
+    });
+
+    return tables;
+  }
+
+  private isLayoutTable(table: Element): boolean {
+    const hasHeaders = table.querySelector('th, thead') !== null;
+    const hasBorder = table.getAttribute('border') !== '0';
+    const hasRole = table.getAttribute('role') === 'presentation';
+    const cellCount = table.querySelectorAll('td, th').length;
+
+    return !hasHeaders && !hasBorder && (hasRole || cellCount < 3);
+  }
+
+  private extractTableHeaders(table: Element): string[] {
+    const headers: string[] = [];
+
+    const thead = table.querySelector('thead');
+    if (thead) {
+      thead.querySelectorAll('th').forEach((th) => {
+        headers.push(th.textContent?.trim() || '');
+      });
+    }
+
+    if (headers.length === 0) {
+      const firstRow = table.querySelector('tr');
+      firstRow?.querySelectorAll('th, td').forEach((cell) => {
+        const text = cell.textContent?.trim() || '';
+        if (text && cell.tagName === 'TH') {
+          headers.push(text);
+        }
+      });
+    }
+
+    return headers;
+  }
+
+  private extractTableRows(table: Element): string[][] {
+    const rows: string[][] = [];
+    const tbody = table.querySelector('tbody') || table;
+    const trs = tbody.querySelectorAll('tr');
+
+    trs.forEach((tr) => {
+      const row: string[] = [];
+      tr.querySelectorAll('td, th').forEach((cell) => {
+        row.push(cell.textContent?.trim() || '');
+      });
+      if (row.some((cell) => cell.length > 0)) {
+        rows.push(row);
+      }
+    });
+
+    return rows;
+  }
+
+  private extractLists(doc: Document): List[] {
+    const lists: List[] = [];
+    const listElements = doc.querySelectorAll('ul, ol, dl');
+
+    listElements.forEach((list, index) => {
+      const type = list.tagName === 'UL' ? 'unordered' : list.tagName === 'OL' ? 'ordered' : 'definition';
+      const items = this.extractListItems(list, 0);
+
+      if (items.length > 0) {
+        lists.push({
+          id: `list-${index}`,
+          type,
+          items,
+          element: this.getSelector(list),
+          index
+        });
+      }
+    });
+
+    return lists;
+  }
+
+  private extractListItems(list: Element, depth: number): ListItem[] {
+    const items: ListItem[] = [];
+
+    if (list.tagName === 'DL') {
+      const children = Array.from(list.children);
+      for (let i = 0; i < children.length; i++) {
+        if (children[i].tagName === 'DT') {
+          const item: ListItem = {
+            text: children[i].textContent?.trim() || '',
+            html: children[i].innerHTML,
+            depth
+          };
+          if (i + 1 < children.length && children[i + 1].tagName === 'DD') {
+            item.subItems = [{
+              text: children[i + 1].textContent?.trim() || '',
+              html: children[i + 1].innerHTML,
+              depth: depth + 1
+            }];
+          }
+          items.push(item);
+        }
+      }
+    } else {
+      list.querySelectorAll(':scope > li').forEach((li) => {
+        const item: ListItem = {
+          text: this.getDirectText(li),
+          html: li.innerHTML,
+          depth
+        };
+
+        const nestedList = li.querySelector('ul, ol');
+        if (nestedList) {
+          item.subItems = this.extractListItems(nestedList, depth + 1);
+        }
+
+        items.push(item);
+      });
+    }
+
+    return items;
+  }
+
+  private extractEmbeds(doc: Document): Embed[] {
+    const embeds: Embed[] = [];
+    let embedIndex = 0;
+
+    doc.querySelectorAll('video, iframe[src*="youtube"], iframe[src*="vimeo"]').forEach((element) => {
+      const embed = this.createEmbed(element, embedIndex++);
+      if (embed) embeds.push(embed);
+    });
+
+    doc.querySelectorAll('.twitter-tweet, .instagram-media, [data-tweet-id]').forEach((element) => {
+      const embed = this.createSocialEmbed(element, embedIndex++);
+      if (embed) embeds.push(embed);
+    });
+
+    doc.querySelectorAll('iframe[src*="codepen"], iframe[src*="jsfiddle"], iframe[src*="codesandbox"]').forEach((element) => {
+      const embed = this.createCodeEmbed(element, embedIndex++);
+      if (embed) embeds.push(embed);
+    });
+
+    return embeds;
+  }
+
+  private createEmbed(element: Element, index: number): Embed | null {
+    const tagName = element.tagName.toLowerCase();
+    let type: Embed['type'] = 'other';
+    let url = '';
+    let provider = '';
+
+    if (tagName === 'video') {
+      type = 'video';
+      url = element.getAttribute('src') || '';
+    } else if (tagName === 'iframe') {
+      const src = element.getAttribute('src') || '';
+      url = src;
+
+      if (src.includes('youtube.com') || src.includes('youtu.be')) {
+        type = 'video';
+        provider = 'YouTube';
+      } else if (src.includes('vimeo.com')) {
+        type = 'video';
+        provider = 'Vimeo';
+      }
+    }
+
+    if (!url) return null;
+
+    return {
+      id: `embed-${index}`,
+      type,
+      url,
+      provider,
+      title: element.getAttribute('title') || undefined,
+      element: this.getSelector(element),
+      index
+    };
+  }
+
+  private createSocialEmbed(element: Element, index: number): Embed | null {
+    let type: Embed['type'] = 'other';
+    let provider = '';
+    let url = '';
+
+    if (element.classList.contains('twitter-tweet')) {
+      type = 'tweet';
+      provider = 'Twitter';
+      url = element.querySelector('a[href*="twitter.com"]')?.getAttribute('href') || '';
+    } else if (element.classList.contains('instagram-media')) {
+      type = 'instagram';
+      provider = 'Instagram';
+      url = element.getAttribute('data-instgrm-permalink') || '';
+    }
+
+    if (!url) return null;
+
+    return {
+      id: `embed-${index}`,
+      type,
+      url,
+      provider,
+      element: this.getSelector(element),
+      index
+    };
+  }
+
+  private createCodeEmbed(element: Element, index: number): Embed | null {
+    const src = element.getAttribute('src') || '';
+    let provider = '';
+
+    if (src.includes('codepen.io')) {
+      provider = 'CodePen';
+    } else if (src.includes('jsfiddle.net')) {
+      provider = 'JSFiddle';
+    } else if (src.includes('codesandbox.io')) {
+      provider = 'CodeSandbox';
+    }
+
+    return {
+      id: `embed-${index}`,
+      type: 'codepen',
+      url: src,
+      provider,
+      element: this.getSelector(element),
+      index
+    };
+  }
+
+  private extractStructuredData(doc: Document): StructuredData[] {
+    const data: StructuredData[] = [];
+
+    doc.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
+      try {
+        const jsonData = JSON.parse(script.textContent || '{}');
+        data.push({
+          type: 'json-ld',
+          data: jsonData,
+          context: jsonData['@context']
+        });
+      } catch (e) {
+        // Invalid JSON
+      }
+    });
+
+    const ogData: any = {};
+    doc.querySelectorAll('meta[property^="og:"]').forEach((meta) => {
+      const property = meta.getAttribute('property')?.replace('og:', '');
+      const content = meta.getAttribute('content');
+      if (property && content) {
+        ogData[property] = content;
+      }
+    });
+    if (Object.keys(ogData).length > 0) {
+      data.push({ type: 'opengraph', data: ogData });
+    }
+
+    const microdataElements = doc.querySelectorAll('[itemscope]');
+    microdataElements.forEach((element) => {
+      const itemData = this.extractMicrodata(element);
+      if (itemData) {
+        data.push({ type: 'microdata', data: itemData });
+      }
+    });
+
+    return data;
+  }
+
+  private extractMicrodata(element: Element): any {
+    const data: any = {};
+    const itemType = element.getAttribute('itemtype');
+    if (itemType) {
+      data['@type'] = itemType;
+    }
+
+    element.querySelectorAll('[itemprop]').forEach((prop) => {
+      const name = prop.getAttribute('itemprop');
+      const value = prop.getAttribute('content') || prop.textContent?.trim();
+      if (name && value) {
+        data[name] = value;
+      }
+    });
+
+    return Object.keys(data).length > 0 ? data : null;
+  }
+
+  private calculateQuality(
+    doc: Document,
+    paragraphs: Paragraph[],
+    tables?: Table[],
+    lists?: List[]
+  ): ContentQuality {
+    const text = paragraphs.map((p) => p.text).join(' ');
+    const wordCount = text.split(/\s+/).length;
+
+    const totalText = doc.body?.textContent?.length || 1;
+    const htmlLength = doc.body?.innerHTML.length || 1;
+    const textDensity = totalText / htmlLength;
+
+    const links = doc.querySelectorAll('a');
+    const linkText = Array.from(links).map((a) => a.textContent || '').join('').length;
+    const linkDensity = linkText / (totalText || 1);
+
+    const adSelectors = ['.ad', '.advertisement', '[id*="ad"]', '[class*="ad-"]'];
+    const adElements = adSelectors.reduce(
+      (count, selector) => count + doc.querySelectorAll(selector).length,
+      0
+    );
+    const totalElements = doc.querySelectorAll('*').length;
+    const adDensity = adElements / (totalElements || 1);
+
+    const hasTitle = doc.querySelector('h1') !== null;
+    const hasSections = doc.querySelectorAll('h2, h3').length > 0;
+    const hasParagraphs = paragraphs.length > 3;
+    const hasMedia = doc.querySelectorAll('img, video').length > 0;
+    const structureScore =
+      (hasTitle ? 0.25 : 0) +
+      (hasSections ? 0.25 : 0) +
+      (hasParagraphs ? 0.25 : 0) +
+      (hasMedia ? 0.25 : 0);
+
+    const avgSentenceLength = this.calculateAvgSentenceLength(text);
+    const readabilityScore = Math.min(1, Math.max(0, 1 - (avgSentenceLength - 15) / 30));
+
+    const hasMetadata = doc.querySelector('meta[name="author"]') !== null;
+    const hasDate = doc.querySelector('time, [class*="date"]') !== null;
+    const hasContent = wordCount > 200;
+    const completeness = (hasMetadata ? 0.2 : 0) + (hasDate ? 0.2 : 0) + (hasContent ? 0.6 : 0);
+
+    const score =
+      textDensity * 0.2 +
+      (1 - linkDensity) * 0.2 +
+      (1 - adDensity) * 0.1 +
+      structureScore * 0.2 +
+      readabilityScore * 0.2 +
+      completeness * 0.1;
+
+    return {
+      score: Math.min(1, Math.max(0, score)),
+      textDensity,
+      linkDensity,
+      adDensity,
+      readabilityScore,
+      structureScore,
+      completeness
+    };
+  }
+
+  private extractEntities(text: string): Entity[] {
+    const entities: Entity[] = [];
+
+    const datePattern = /\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4})\b/gi;
+    const dateMatches = text.match(datePattern);
+    if (dateMatches) {
+      dateMatches.forEach((match) => {
+        entities.push({
+          text: match,
+          type: 'date',
+          confidence: 0.9
+        });
+      });
+    }
+
+    const moneyPattern = /\$[\d,]+\.?\d*|\b\d+\s*(?:dollars?|euros?|pounds?|yen|yuan)\b/gi;
+    const moneyMatches = text.match(moneyPattern);
+    if (moneyMatches) {
+      moneyMatches.forEach((match) => {
+        entities.push({
+          text: match,
+          type: 'money',
+          confidence: 0.85
+        });
+      });
+    }
+
+    const orgPattern = /\b[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3}\b/g;
+    const orgMatches = text.match(orgPattern);
+    if (orgMatches) {
+      orgMatches.forEach((match) => {
+        if (!this.isCommonPhrase(match)) {
+          entities.push({
+            text: match,
+            type: 'organization',
+            confidence: 0.6
+          });
+        }
+      });
+    }
+
+    return entities;
+  }
+
+  private extractKeywords(text: string): string[] {
+    const words = text.toLowerCase().split(/\s+/);
+    const wordFreq = new Map<string, number>();
+
+    words.forEach((word) => {
+      const cleaned = word.replace(/[^\w]/g, '');
+      if (cleaned.length > 3 && !this.isStopWord(cleaned)) {
+        wordFreq.set(cleaned, (wordFreq.get(cleaned) || 0) + 1);
+      }
+    });
+
+    return Array.from(wordFreq.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([word]) => word);
+  }
+
+  private calculateReadability(text: string): ReadabilityScore {
+    const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+    const words = text.split(/\s+/).filter((w) => w.length > 0);
+    const syllables = words.map((w) => this.countSyllables(w)).reduce((a, b) => a + b, 0);
+
+    const avgSentenceLength = words.length / (sentences.length || 1);
+    const avgSyllablesPerWord = syllables / (words.length || 1);
+
+    const fleschKincaid = 0.39 * avgSentenceLength + 11.8 * avgSyllablesPerWord - 15.59;
+
+    const complexWords = words.filter((w) => this.countSyllables(w) >= 3).length;
+    const gunningFog = 0.4 * (avgSentenceLength + (100 * complexWords) / words.length);
+
+    return {
+      fleschKincaid: Math.max(0, fleschKincaid),
+      gunningFog: Math.max(0, gunningFog),
+      avgSentenceLength,
+      avgWordLength: words.reduce((sum, w) => sum + w.length, 0) / words.length,
+      complexWords: complexWords
+    };
+  }
+
+  private countSyllables(word: string): number {
+    word = word.toLowerCase();
+    let count = 0;
+    let previousWasVowel = false;
+
+    for (let i = 0; i < word.length; i++) {
+      const isVowel = /[aeiouy]/.test(word[i]);
+      if (isVowel && !previousWasVowel) {
+        count++;
+      }
+      previousWasVowel = isVowel;
+    }
+
+    if (word.endsWith('e')) {
+      count--;
+    }
+
+    return Math.max(1, count);
+  }
+
+  private isStopWord(word: string): boolean {
+    const stopWords = new Set([
+      'the', 'is', 'at', 'which', 'on', 'and', 'a', 'an', 'as', 'are',
+      'been', 'by', 'for', 'from', 'has', 'had', 'have', 'in', 'of', 'or',
+      'that', 'to', 'was', 'will', 'with', 'would', 'could', 'should'
+    ]);
+    return stopWords.has(word);
+  }
+
+  private isCommonPhrase(phrase: string): boolean {
+    const common = new Set([
+      'The United States', 'United States', 'New York', 'Los Angeles'
+    ]);
+    return common.has(phrase);
+  }
+
+  private calculateAvgSentenceLength(text: string): number {
+    const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+    const words = text.split(/\s+/).filter((w) => w.length > 0);
+    return words.length / (sentences.length || 1);
+  }
+
+  private getDirectText(element: Element): string {
+    let text = '';
+    element.childNodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        text += node.textContent;
+      }
+    });
+    return text.trim();
+  }
+
+  private detectLanguage(doc: Document, text: string): string {
+    const docLang = doc.documentElement.lang || doc.querySelector('html')?.getAttribute('lang');
+    if (docLang) return docLang.split('-')[0];
+
+    return franc(text.slice(0, 1000)) || 'en';
+  }
+
+  private getSelector(element: Element): string {
+    const path: string[] = [];
+    let current: Element | null = element;
+
+    while (current && current !== document.body) {
+      let selector = current.tagName.toLowerCase();
+
+      if (current.id) {
+        selector = `#${current.id}`;
+        path.unshift(selector);
+        break;
+      } else if (current.className) {
+        const classes = Array.from(current.classList)
+          .filter((c) => !c.includes('_') && c.length < 20)
+          .slice(0, 2);
+
+        if (classes.length > 0) {
+          selector += '.' + classes.join('.');
+        }
+      }
+
+      const siblings = current.parentElement?.children;
+      if (siblings && siblings.length > 1) {
+        const index = Array.from(siblings).indexOf(current);
+        selector += `:nth-child(${index + 1})`;
+      }
+
+      path.unshift(selector);
+      current = current.parentElement;
+    }
+
+    return path.join(' > ');
+  }
+
+  private async extractMetadataEnhanced(doc: Document, url: string): Promise<ContentMetadata> {
+    const metadata = this.extractMetadata(doc, url);
+
+    const authorElements = doc.querySelectorAll('[rel="author"], .author-name, .by-line');
+    if (authorElements.length > 1) {
+      metadata.authors = Array.from(authorElements)
+        .map((el) => el.textContent?.trim())
+        .filter((author): author is string => !!author);
+    }
+
+    const images = doc.querySelectorAll('img[src]');
+    metadata.images = Array.from(images)
+      .slice(0, 5)
+      .map((img) => ({
+        url: img.getAttribute('src') || '',
+        alt: img.getAttribute('alt') || undefined,
+        width: (img as HTMLImageElement).width || undefined,
+        height: (img as HTMLImageElement).height || undefined
+      }));
+
+    metadata.socialMetadata = {
+      twitter: {
+        card: doc.querySelector('meta[name="twitter:card"]')?.getAttribute('content') || undefined,
+        site: doc.querySelector('meta[name="twitter:site"]')?.getAttribute('content') || undefined,
+        creator: doc.querySelector('meta[name="twitter:creator"]')?.getAttribute('content') || undefined
+      },
+      openGraph: {
+        type: doc.querySelector('meta[property="og:type"]')?.getAttribute('content') || undefined,
+        locale: doc.querySelector('meta[property="og:locale"]')?.getAttribute('content') || undefined,
+        siteName: doc.querySelector('meta[property="og:site_name"]')?.getAttribute('content') || undefined
+      }
+    };
+
+    return metadata;
+  }
+
+  private extractMetadata(doc: Document, url: string): ContentMetadata {
+    const metadata: ContentMetadata = {
+      source: new URL(url).hostname,
+      extractedAt: new Date(),
+      tags: []
+    };
+
+    const authorSelectors = [
+      'meta[name="author"]',
+      'meta[property="article:author"]',
+      '[rel="author"]',
+      '.author-name',
+      '.by-line',
+      '.byline',
+      '[itemprop="author"]'
+    ];
+
+    for (const selector of authorSelectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        metadata.author = element.getAttribute('content') || element.textContent?.trim();
+        if (metadata.author) break;
+      }
+    }
+
+    const dateSelectors = [
+      { selector: 'meta[property="article:published_time"]', attr: 'content' },
+      { selector: 'time[datetime]', attr: 'datetime' },
+      { selector: '.publish-date', attr: 'textContent' },
+      { selector: '[itemprop="datePublished"]', attr: 'content' }
+    ];
+
+    for (const { selector, attr } of dateSelectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        const dateStr = attr === 'textContent' ? element.textContent : element.getAttribute(attr);
+
+        if (dateStr) {
+          const date = new Date(dateStr);
+          if (!isNaN(date.getTime())) {
+            metadata.publishDate = date;
+            break;
+          }
+        }
+      }
+    }
+
+    const keywords = doc.querySelector('meta[name="keywords"]')?.getAttribute('content');
+    if (keywords) {
+      metadata.tags = keywords.split(',').map((k) => k.trim()).filter((k) => k.length > 0);
+    }
+
+    const category = doc.querySelector('meta[property="article:section"]')?.getAttribute('content');
+    if (category) {
+      metadata.category = category;
+    }
+
+    metadata.description =
+      doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
+      doc.querySelector('meta[property="og:description"]')?.getAttribute('content');
+
+    metadata.imageUrl =
+      doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+      doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+
+    return metadata;
+  }
+
+  private getBasicMetadata(url: string): ContentMetadata {
+    return {
+      source: new URL(url).hostname,
+      extractedAt: new Date(),
+      tags: []
+    };
+  }
+
+  private detectSections(paragraphs: Paragraph[]): Section[] {
+    const sections: Section[] = [];
+    let currentSection: Section | null = null;
+    let sectionIndex = 0;
+
+    paragraphs.forEach((p, index) => {
+      if (p.isHeading && p.headingLevel) {
+        if (currentSection) {
+          currentSection.endIndex = index - 1;
+          sections.push(currentSection);
+        }
+
+        currentSection = {
+          id: `section-${sectionIndex++}`,
+          title: p.text,
+          level: p.headingLevel,
+          paragraphs: [],
+          startIndex: index,
+          endIndex: index
+        };
+      } else if (currentSection) {
+        currentSection.paragraphs.push(p);
+        currentSection.endIndex = index;
+      }
+    });
+
+    if (currentSection) {
+      sections.push(currentSection);
+    }
+
+    return sections;
+  }
+
+  private extractTitle(doc: Document): string {
+    const strategies = [
+      () => doc.querySelector('h1')?.textContent,
+      () => doc.querySelector('[class*="title"]')?.textContent,
+      () => doc.querySelector('meta[property="og:title"]')?.getAttribute('content'),
+      () => doc.title.split(/[|\-–]/)[0],
+      () => doc.title
+    ];
+
+    for (const strategy of strategies) {
+      const title = strategy()?.trim();
+      if (title && title.length > 10 && title.length < 200) {
+        return title;
+      }
+    }
+
+    return doc.title;
+  }
+
+  private enhanceExtractedContent(
+    partial: Partial<ExtractedContent>,
+    doc: Document,
+    url: string,
+    options: ExtractionOptions
+  ): ExtractedContent {
+    const wordCount = partial.cleanText?.split(/\s+/).filter((w) => w.length > 0).length || 0;
+
+    return {
+      title: partial.title || this.extractTitle(doc),
+      paragraphs: partial.paragraphs || [],
+      cleanText: partial.cleanText || '',
+      sections: partial.sections || [],
+      readingTime: partial.readingTime || Math.ceil(wordCount / 200),
+      wordCount: partial.wordCount || wordCount,
+      language: partial.language || doc.documentElement.lang || 'en',
+      metadata: partial.metadata || this.extractMetadata(doc, url),
+      quality: partial.quality || this.calculateQuality(doc, partial.paragraphs || []),
+      fingerprint: ''
+    };
+  }
+}
+
+
+
+// src/detectors/paragraph-detector.ts
+import type { Paragraph, ExtractionOptions } from '../types';
+
+export class ParagraphDetector {
+  private paragraphSelectors = [
+    'p',
+    'div.paragraph',
+    'div.content > div',
+    'article > div',
+    '.post-content > *',
+    '.entry-content > *',
+    '.article-body > *'
+  ];
+
+  private excludeSelectors = [
+    'script',
+    'style',
+    'nav',
+    'header',
+    'footer',
+    '.advertisement',
+    '.social-share',
+    '.related-posts',
+    '[class*="sidebar"]',
+    '[class*="widget"]',
+    '[id*="comments"]'
+  ];
+
+  detect(doc: Document, options: ExtractionOptions = {}): Paragraph[] {
+    const paragraphs: Paragraph[] = [];
+    const minLength = options.minParagraphLength || 20;
+    const elements = this.findParagraphElements(doc);
+
+    elements.forEach((element, index) => {
+      const text = this.extractText(element);
+
+      if (text.length < minLength) return;
+
+      const paragraph: Paragraph = {
+        id: `p-${index}`,
+        text,
+        html: this.extractHTML(element),
+        index,
+        element: this.getSelector(element),
+        bounds: element.getBoundingClientRect(),
+        isQuote: this.isQuote(element),
+        isCode: this.isCode(element),
+        isHeading: this.isHeading(element),
+        headingLevel: this.getHeadingLevel(element),
+        importance: options.scoreParagraphs ? this.scoreParagraph(element, text) : 0.5
+      };
+
+      paragraphs.push(paragraph);
+    });
+
+    return this.postProcess(paragraphs);
+  }
+
+  private findParagraphElements(doc: Document): Element[] {
+    const elements: Element[] = [];
+    const seen = new Set<Element>();
+
+    const contentContainer = this.findContentContainer(doc);
+
+    if (contentContainer) {
+      const walker = document.createTreeWalker(
+        contentContainer,
+        NodeFilter.SHOW_ELEMENT,
+        {
+          acceptNode: (node) => {
+            const element = node as Element;
+
+            if (this.shouldExclude(element)) {
+              return NodeFilter.FILTER_REJECT;
+            }
+
+            if (this.hasTextContent(element)) {
+              return NodeFilter.FILTER_ACCEPT;
+            }
+
+            return NodeFilter.FILTER_SKIP;
+          }
+        }
+      );
+
+      let node: Node | null;
+      while (node = walker.nextNode()) {
+        const element = node as Element;
+        if (!seen.has(element) && !this.hasTextChildren(element)) {
+          seen.add(element);
+          elements.push(element);
+        }
+      }
+    } else {
+      this.paragraphSelectors.forEach(selector => {
+        doc.querySelectorAll(selector).forEach(element => {
+          if (!seen.has(element) && !this.shouldExclude(element)) {
+            seen.add(element);
+            elements.push(element);
+          }
+        });
+      });
+    }
+
+    return elements;
+  }
+
+  private findContentContainer(doc: Document): Element | null {
+    const candidates = [
+      doc.querySelector('main'),
+      doc.querySelector('article'),
+      doc.querySelector('[role="main"]'),
+      doc.querySelector('.content'),
+      doc.querySelector('.post-content'),
+      doc.querySelector('.entry-content'),
+      doc.querySelector('#content')
+    ].filter(Boolean) as Element[];
+
+    let bestCandidate: Element | null = null;
+    let bestScore = 0;
+
+    candidates.forEach(candidate => {
+      const score = this.scoreContainer(candidate);
+      if (score > bestScore) {
+        bestScore = score;
+        bestCandidate = candidate;
+      }
+    });
+
+    return bestCandidate;
+  }
+
+  private scoreContainer(element: Element): number {
+    const text = element.textContent || '';
+    const linkText = Array.from(element.querySelectorAll('a'))
+      .map(a => a.textContent || '')
+      .join('');
+
+    const textLength = text.length;
+    const linkDensity = linkText.length / (textLength || 1);
+
+    return textLength * (1 - linkDensity);
+  }
+
+  private shouldExclude(element: Element): boolean {
+    for (const selector of this.excludeSelectors) {
+      if (element.matches(selector)) return true;
+    }
+
+    for (const selector of this.excludeSelectors) {
+      if (element.closest(selector)) return true;
+    }
+
+    return false;
+  }
+
+  private hasTextContent(element: Element): boolean {
+    const text = element.textContent?.trim() || '';
+    return text.length > 20;
+  }
+
+  private hasTextChildren(element: Element): boolean {
+    return Array.from(element.children).some(child =>
+      this.hasTextContent(child) && !this.shouldExclude(child)
+    );
+  }
+
+  private extractText(element: Element): string {
+    const clone = element.cloneNode(true) as Element;
+    clone.querySelectorAll('script, style').forEach(el => el.remove());
+    return clone.textContent?.trim() || '';
+  }
+
+  private extractHTML(element: Element): string {
+    const clone = element.cloneNode(true) as Element;
+    clone.querySelectorAll('script, style').forEach(el => el.remove());
+    return clone.innerHTML.trim();
+  }
+
+  private getSelector(element: Element): string {
+    const path: string[] = [];
+    let current: Element | null = element;
+
+    while (current && current !== document.body) {
+      let selector = current.tagName.toLowerCase();
+
+      if (current.id) {
+        selector = `#${current.id}`;
+        path.unshift(selector);
+        break;
+      } else if (current.className) {
+        const classes = Array.from(current.classList)
+          .filter(c => !c.includes('_') && c.length < 20)
+          .slice(0, 2);
+
+        if (classes.length > 0) {
+          selector += '.' + classes.join('.');
+        }
+      }
+
+      const siblings = current.parentElement?.children;
+      if (siblings && siblings.length > 1) {
+        const index = Array.from(siblings).indexOf(current);
+        selector += `:nth-child(${index + 1})`;
+      }
+
+      path.unshift(selector);
+      current = current.parentElement;
+    }
+
+    return path.join(' > ');
+  }
+
+  private isQuote(element: Element): boolean {
+    return element.tagName === 'BLOCKQUOTE' ||
+           element.classList.contains('quote') ||
+           element.classList.contains('blockquote') ||
+           element.getAttribute('role') === 'blockquote';
+  }
+
+  private isCode(element: Element): boolean {
+    return element.tagName === 'CODE' ||
+           element.tagName === 'PRE' ||
+           element.classList.contains('code') ||
+           element.classList.contains('highlight');
+  }
+
+  private isHeading(element: Element): boolean {
+    return /^H[1-6]$/.test(element.tagName);
+  }
+
+  private getHeadingLevel(element: Element): number | undefined {
+    const match = element.tagName.match(/^H([1-6])$/);
+    return match ? parseInt(match[1]) : undefined;
+  }
+
+  private scoreParagraph(element: Element, text: string): number {
+    let score = 0.5;
+
+    if (text.length > 100) score += 0.1;
+    if (text.length > 300) score += 0.1;
+
+    const position = element.getBoundingClientRect().top;
+    if (position < window.innerHeight) score += 0.1;
+
+    if (element.closest('article')) score += 0.1;
+    if (element.tagName === 'P') score += 0.05;
+
+    if (this.isQuote(element)) score -= 0.2;
+    if (this.isCode(element)) score -= 0.3;
+
+    const links = element.querySelectorAll('a').length;
+    const words = text.split(/\s+/).length;
+    const linkDensity = links / (words || 1);
+    score -= linkDensity * 0.5;
+
+    return Math.max(0, Math.min(1, score));
+  }
+
+  private postProcess(paragraphs: Paragraph[]): Paragraph[] {
+    const processed: Paragraph[] = [];
+    let current: Paragraph | null = null;
+
+    paragraphs.forEach(p => {
+      if (current && this.shouldMerge(current, p)) {
+        current.text += '\n' + p.text;
+        current.html += '\n' + p.html;
+        current.bounds = this.mergeBounds(current.bounds, p.bounds);
+      } else {
+        if (current) processed.push(current);
+        current = p;
+      }
+    });
+
+    if (current) processed.push(current);
+
+    processed.forEach((p, i) => {
+      p.index = i;
+      p.id = `p-${i}`;
+    });
+
+    return processed;
+  }
+
+  private shouldMerge(p1: Paragraph, p2: Paragraph): boolean {
+    if (p1.isHeading || p2.isHeading) return false;
+    if (p1.isQuote || p2.isQuote || p1.isCode || p2.isCode) return false;
+
+    const distance = p2.bounds.top - (p1.bounds.top + p1.bounds.height);
+    if (distance > 50) return false;
+
+    const p1EndsWithPeriod = /[.!?]$/.test(p1.text.trim());
+    const p2StartsWithLower = /^[a-z]/.test(p2.text.trim());
+
+    return !p1EndsWithPeriod && p2StartsWithLower;
+  }
+
+  private mergeBounds(b1: DOMRect, b2: DOMRect): DOMRect {
+    return new DOMRect(
+      Math.min(b1.left, b2.left),
+      b1.top,
+      Math.max(b1.right, b2.right) - Math.min(b1.left, b2.left),
+      b2.bottom - b1.top
+    );
+  }
+}
+
+
+
+// src/cleaners/content-cleaner.ts
+import sanitizeHtml from 'sanitize-html';
+import type { CleaningOptions } from '../types';
+
+export class ContentCleaner {
+  private defaultOptions: CleaningOptions = {
+    removeAds: true,
+    removeNavigation: true,
+    removeComments: true,
+    removeRelated: true,
+    removeFooters: true,
+    removeSidebars: true,
+    preserveImages: true,
+    preserveVideos: true,
+    preserveIframes: false,
+    removePopups: true,
+    removeCookieBanners: true,
+    removeNewsletterSignups: true,
+    preserveTables: true,
+    preserveLists: true,
+    preserveEmbeds: true,
+    aggressiveMode: false
+  };
+
+  private removeSelectors = {
+    ads: [
+      '.advertisement', '.ad', '.ads', '[class*="ad-"]', '[id*="ad-"]',
+      '.sponsored', '.promo', '[class*="sponsor"]', 'ins.adsbygoogle',
+      '[id*="google_ads"]', '.banner-ad', '.text-ad', '.ad-container',
+      '.ad-banner', '.ad-wrapper', '[data-ad]', '[data-advertisement]'
+    ],
+    navigation: [
+      'nav', '.navigation', '.nav', '.menu', '#menu', '.navbar',
+      '.header-menu', '.main-menu', '.site-navigation', '.breadcrumb',
+      '.breadcrumbs', '[role="navigation"]', '.nav-links'
+    ],
+    comments: [
+      '#comments', '.comments', '.comment-section', '.disqus',
+      '#disqus_thread', '.fb-comments', '[id*="comments"]',
+      '.comment-form', '.comment-list', '.comment-respond'
+    ],
+    related: [
+      '.related', '.related-posts', '.recommended', '.more-stories',
+      '.you-might-like', '.suggested', '.popular-posts', '.trending',
+      '.also-read', '.read-next', '.more-articles', '.suggested-articles'
+    ],
+    footers: [
+      'footer', '.footer', '#footer', '.site-footer', '.page-footer',
+      '.copyright', '.footer-widgets', '.footer-content', '[role="contentinfo"]'
+    ],
+    sidebars: [
+      'aside', '.sidebar', '#sidebar', '.widget-area', '.side-column',
+      '.rail', '[class*="sidebar"]', '[id*="sidebar"]', '.aside',
+      '.side-bar', '[role="complementary"]'
+    ],
+    social: [
+      '.social-share', '.share-buttons', '.social-media', '.sharing',
+      '.share-icons', '.social-links', '.share-bar', '.share-widget',
+      '.social-buttons', '.sharing-buttons', '[class*="share-"]'
+    ],
+    popups: [
+      '.popup', '.modal', '.overlay', '.lightbox', '.dialog',
+      '[class*="popup"]', '[class*="modal"]', '.newsletter-signup',
+      '.cookie-notice', '.cookie-banner', '.gdpr-banner', '.privacy-banner'
+    ],
+    newsletters: [
+      '.newsletter', '.subscribe-form', '.email-signup', '.subscription-box',
+      '.newsletter-form', '.subscribe-widget', '.email-subscription'
+    ],
+    cookieBanners: [
+      '.cookie-banner', '.cookie-notice', '.cookie-consent', '.gdpr-notice',
+      '.privacy-notice', '#cookie-banner', '#cookie-notice'
+    ]
+  };
+
+  clean(doc: Document, options?: Partial<CleaningOptions>): Document {
+    const opts = { ...this.defaultOptions, ...options };
+    const cleanDoc = doc.cloneNode(true) as Document;
+
+    // Remove unwanted elements
+    if (opts.removeAds) this.removeElements(cleanDoc, this.removeSelectors.ads);
+    if (opts.removeNavigation) this.removeElements(cleanDoc, this.removeSelectors.navigation);
+    if (opts.removeComments) this.removeElements(cleanDoc, this.removeSelectors.comments);
+    if (opts.removeRelated) this.removeElements(cleanDoc, this.removeSelectors.related);
+    if (opts.removeFooters) this.removeElements(cleanDoc, this.removeSelectors.footers);
+    if (opts.removeSidebars) this.removeElements(cleanDoc, this.removeSelectors.sidebars);
+    if (opts.removePopups) this.removeElements(cleanDoc, this.removeSelectors.popups);
+    if (opts.removeCookieBanners) this.removeElements(cleanDoc, this.removeSelectors.cookieBanners);
+    if (opts.removeNewsletterSignups) this.removeElements(cleanDoc, this.removeSelectors.newsletters);
+
+    // Always remove these
+    this.removeElements(cleanDoc, this.removeSelectors.social);
+
+    // Apply custom selectors
+    if (opts.customSelectors?.remove) {
+      this.removeElements(cleanDoc, opts.customSelectors.remove);
+    }
+
+    // Clean attributes
+    this.cleanAttributes(cleanDoc, opts);
+
+    // Handle media
+    if (!opts.preserveImages) {
+      this.removeElements(cleanDoc, ['img', 'picture', 'figure']);
+    }
+    if (!opts.preserveVideos) {
+      this.removeElements(cleanDoc, ['video', 'audio']);
+    }
+    if (!opts.preserveIframes) {
+      this.removeElements(cleanDoc, ['iframe', 'embed', 'object']);
+    }
+
+    // Remove empty elements
+    this.removeEmptyElements(cleanDoc);
+
+    // Remove hidden elements
+    this.removeHiddenElements(cleanDoc);
+
+    // Aggressive mode
+    if (opts.aggressiveMode) {
+      this.applyAggressiveCleaning(cleanDoc);
+    }
+
+    return cleanDoc;
+  }
+
+  cleanHtml(html: string, options?: Partial<CleaningOptions>): string {
+    const opts = { ...this.defaultOptions, ...options };
+
+    const allowedTags = ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'blockquote', 'pre', 'code', 'a', 'ul', 'ol', 'li', 'dl', 'dt', 'dd'];
+
+    if (opts.preserveImages) {
+      allowedTags.push('img', 'picture', 'figure', 'figcaption');
+    }
+    if (opts.preserveVideos) {
+      allowedTags.push('video', 'audio', 'source');
+    }
+    if (opts.preserveIframes) {
+      allowedTags.push('iframe');
+    }
+    if (opts.preserveTables) {
+      allowedTags.push('table', 'thead', 'tbody', 'tr', 'th', 'td', 'caption');
+    }
+
+    const allowedAttributes: sanitizeHtml.Attributes = {
+      a: ['href', 'title', 'rel'],
+      img: ['src', 'alt', 'title', 'width', 'height'],
+      video: ['src', 'controls', 'width', 'height'],
+      audio: ['src', 'controls'],
+      iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen'],
+      blockquote: ['cite'],
+      code: ['class'],
+      pre: ['class']
+    };
+
+    return sanitizeHtml(html, {
+      allowedTags,
+      allowedAttributes,
+      allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com', 'codepen.io'],
+      transformTags: {
+        a: (tagName, attribs) => {
+          // Add rel="noopener noreferrer" to external links
+          if (attribs.href && attribs.href.startsWith('http')) {
+            attribs.rel = 'noopener noreferrer';
+          }
+          return { tagName, attribs };
+        }
+      }
+    });
+  }
+
+  private removeElements(doc: Document, selectors: string[]) {
+    selectors.forEach(selector => {
+      try {
+        doc.querySelectorAll(selector).forEach(el => el.remove());
+      } catch (e) {
+        // Invalid selector, skip
+      }
+    });
+  }
+
+  private cleanAttributes(doc: Document, options: CleaningOptions) {
+    const allowedAttributes = [
+      'href', 'src', 'alt', 'title', 'class', 'id',
+      'data-src', 'data-srcset', 'width', 'height',
+      'datetime', 'cite', 'lang', 'dir'
+    ];
+
+    // Preserve custom attributes if specified
+    if (options.customSelectors?.preserve) {
+      options.customSelectors.preserve.forEach(attr => {
+        if (!allowedAttributes.includes(attr)) {
+          allowedAttributes.push(attr);
+        }
+      });
+    }
+
+    doc.querySelectorAll('*').forEach(element => {
+      const attributes = Array.from(element.attributes);
+
+      attributes.forEach(attr => {
+        if (!allowedAttributes.includes(attr.name) && !attr.name.startsWith('aria-')) {
+          element.removeAttribute(attr.name);
+        }
+      });
+
+      // Clean classes
+      if (element.classList.length > 0) {
+        const cleanClasses = Array.from(element.classList)
+          .filter(cls => !this.isJunkClass(cls));
+
+        element.className = cleanClasses.join(' ');
+      }
+    });
+  }
+
+  private isJunkClass(className: string): boolean {
+    const junkPatterns = [
+      /^js-/, /^is-/, /^has-/, /^wp-/, /^post-\d+$/,
+      /^id-\d+$/, /^item-\d+$/, /^node-\d+$/, /^_/,
+      /^widget-/, /^module-/, /^component-/
+    ];
+
+    return junkPatterns.some(pattern => pattern.test(className));
+  }
+
+  private removeEmptyElements(doc: Document) {
+    let changed = true;
+
+    while (changed) {
+      changed = false;
+
+      doc.querySelectorAll('div, span, p, section, article').forEach(element => {
+        const text = element.textContent?.trim() || '';
+        const hasImages = element.querySelector('img, video, iframe');
+        const hasPreservedContent = element.querySelector('table, ul, ol, pre, code');
+
+        if (text.length === 0 && !hasImages && !hasPreservedContent) {
+          element.remove();
+          changed = true;
+        }
+      });
+    }
+  }
+
+  private removeHiddenElements(doc: Document) {
+    // Remove inline hidden styles
+    doc.querySelectorAll('[style*="display:none"], [style*="display: none"], [hidden]').forEach(el => {
+      el.remove();
+    });
+
+    // Remove elements with hidden classes
+    const hiddenClasses = ['hidden', 'hide', 'invisible', 'visually-hidden', 'sr-only', 'd-none'];
+    hiddenClasses.forEach(cls => {
+      doc.querySelectorAll(`.${cls}`).forEach(el => el.remove());
+    });
+
+    // Remove elements with zero dimensions
+    doc.querySelectorAll('[width="0"], [height="0"]').forEach(el => {
+      if (el.tagName !== 'IMG') { // Keep tracking pixels for now
+        el.remove();
+      }
+    });
+  }
+
+  private applyAggressiveCleaning(doc: Document) {
+    // Remove all divs with less than 50 characters
+    doc.querySelectorAll('div').forEach(div => {
+      const text = div.textContent?.trim() || '';
+      if (text.length < 50 && !div.querySelector('img, video, table, ul, ol')) {
+        div.remove();
+      }
+    });
+
+    // Remove all links that look like navigation
+    doc.querySelectorAll('a').forEach(link => {
+      const text = link.textContent?.trim() || '';
+      if (text.length < 20 && !link.closest('p, li')) {
+        link.remove();
+      }
+    });
+
+    // Remove any remaining elements with common ad/tracking classes
+    const aggressivePatterns = [
+      '[class*="banner"]', '[class*="promo"]', '[class*="sponsor"]',
+      '[class*="widget"]', '[class*="module"]', '[id*="banner"]'
+    ];
+    this.removeElements(doc, aggressivePatterns);
+  }
+}
+
+
+
+// src/adapters/index.ts
+import type { SiteAdapter } from '../types';
+import { MediumAdapter } from './medium';
+import { SubstackAdapter } from './substack';
+import { GenericNewsAdapter } from './news-sites';
+import { GitHubAdapter } from './github';
+import { WikipediaAdapter } from './wikipedia';
+import { LinkedInAdapter } from './linkedin';
+import { RedditAdapter } from './reddit';
+import { TwitterAdapter } from './twitter';
+
+// Export all adapters
+export {
+  MediumAdapter,
+  SubstackAdapter,
+  GenericNewsAdapter,
+  GitHubAdapter,
+  WikipediaAdapter,
+  LinkedInAdapter,
+  RedditAdapter,
+  TwitterAdapter
+};
+
+// Internal adapters registry
+const adapters: SiteAdapter[] = [
+  new MediumAdapter(),
+  new SubstackAdapter(),
+  new GenericNewsAdapter(),
+  new GitHubAdapter(),
+  new WikipediaAdapter(),
+  new LinkedInAdapter(),
+  new RedditAdapter(),
+  new TwitterAdapter()
+];
+
+export function getSiteAdapter(url: string): SiteAdapter | null {
+  const sortedAdapters = [...adapters].sort(
+    (a, b) => (b.priority || 0) - (a.priority || 0)
+  );
+
+  for (const adapter of sortedAdapters) {
+    if (adapter.patterns.some((pattern) => pattern.test(url))) {
+      return adapter;
+    }
+  }
+  return null;
+}
+
+export function registerAdapter(adapter: SiteAdapter): void {
+  const existingIndex = adapters.findIndex((a) => a.name === adapter.name);
+  if (existingIndex !== -1) {
+    adapters[existingIndex] = adapter;
+  } else {
+    adapters.push(adapter);
+  }
+}
+
+export function unregisterAdapter(name: string): boolean {
+  const index = adapters.findIndex((adapter) => adapter.name === name);
+  if (index !== -1) {
+    adapters.splice(index, 1);
+    return true;
+  }
+  return false;
+}
+
+export function getRegisteredAdapters(): SiteAdapter[] {
+  return [...adapters];
+}
+
+export function clearAdapters(): void {
+  adapters.length = 0;
+}
+
+export function getAdapterByName(name: string): SiteAdapter | null {
+  return adapters.find((adapter) => adapter.name === name) || null;
+}
+
+
+
+// src/adapters/medium.ts
+import type { SiteAdapter, Paragraph } from '../types';
+
+export class MediumAdapter implements SiteAdapter {
+  name = 'medium';
+  patterns = [
+    /medium\.com/,
+    /.*\.medium\.com/,
+    /towardsdatascience\.com/,
+    /hackernoon\.com/,
+    /better.*programming/
+  ];
+  priority = 10;
+
+  extract(doc: Document, url: string) {
+    const article = doc.querySelector('article');
+    if (!article) return {};
+
+    const title = article.querySelector('h1')?.textContent?.trim() || '';
+    const paragraphs = this.detectParagraphs(doc);
+    const author = this.extractAuthor(doc);
+    const publishDate = this.extractPublishDate(doc);
+
+    const cleanText = paragraphs.map(p => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata: {
+        author,
+        publishDate,
+        source: 'medium.com',
+        extractedAt: new Date(),
+        tags: this.extractTags(doc)
+      }
+    };
+  }
+
+  detectParagraphs(doc: Document): Paragraph[] {
+    const paragraphs: Paragraph[] = [];
+    const article = doc.querySelector('article');
+    if (!article) return paragraphs;
+
+    const elements = article.querySelectorAll(
+      'p, h1, h2, h3, h4, blockquote, pre, figure'
+    );
+
+    elements.forEach((element, index) => {
+      const text = element.textContent?.trim() || '';
+      if (text.length < 10) return;
+
+      const tagName = element.tagName.toLowerCase();
+      const isHeading = /^h[1-6]$/.test(tagName);
+
+      paragraphs.push({
+        id: `p-${index}`,
+        text,
+        html: element.innerHTML,
+        index,
+        element: `article > :nth-child(${index + 1})`,
+        bounds: element.getBoundingClientRect(),
+        isQuote: tagName === 'blockquote',
+        isCode: tagName === 'pre' || element.querySelector('code') !== null,
+        isHeading,
+        headingLevel: isHeading ? parseInt(tagName[1]) : undefined,
+        importance: isHeading ? 0.9 : 0.7
+      });
+    });
+
+    return paragraphs;
+  }
+
+  private extractAuthor(doc: Document): string {
+    const selectors = [
+      'a[data-testid="authorName"]',
+      'a[rel="author"]',
+      'span[data-testid="authorName"]',
+      '.pw-author-name'
+    ];
+
+    for (const selector of selectors) {
+      const element = doc.querySelector(selector);
+      if (element?.textContent) {
+        return element.textContent.trim();
+      }
+    }
+
+    return '';
+  }
+
+  private extractPublishDate(doc: Document): Date | undefined {
+    const timeElement = doc.querySelector('time[datetime]');
+    if (timeElement) {
+      const datetime = timeElement.getAttribute('datetime');
+      if (datetime) {
+        return new Date(datetime);
+      }
+    }
+
+    const metaDate = doc.querySelector('meta[property="article:published_time"]');
+    if (metaDate) {
+      const content = metaDate.getAttribute('content');
+      if (content) {
+        return new Date(content);
+      }
+    }
+
+    return undefined;
+  }
+
+  private extractTags(doc: Document): string[] {
+    const tags: string[] = [];
+
+    doc.querySelectorAll('a[href*="/tag/"], a[href*="/tagged/"]').forEach(link => {
+      const text = link.textContent?.trim();
+      if (text && !tags.includes(text)) {
+        tags.push(text);
+      }
+    });
+
+    return tags;
+  }
+}
+
+
+
+// src/adapters/news-sites.ts
+import type { SiteAdapter } from '../types';
+
+export class GenericNewsAdapter implements SiteAdapter {
+  name = 'generic-news';
+  patterns = [
+    /nytimes\.com/,
+    /washingtonpost\.com/,
+    /theguardian\.com/,
+    /bbc\.com/,
+    /cnn\.com/,
+    /reuters\.com/,
+    /bloomberg\.com/,
+    /wsj\.com/
+  ];
+  priority = 10;
+
+  extract(doc: Document, url: string) {
+    const article = doc.querySelector('article, [role="article"], .article-body, .story-body');
+    if (!article) return {};
+
+    const title = this.extractTitle(doc);
+    const paragraphs = this.detectParagraphs(doc);
+    const metadata = this.extractMetadata(doc);
+
+    const cleanText = paragraphs.map(p => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata
+    };
+  }
+
+  detectParagraphs(doc: Document) {
+    const paragraphs: any[] = [];
+    const article = doc.querySelector('article, [role="article"], .article-body');
+    if (!article) return paragraphs;
+
+    const elements = article.querySelectorAll('p, h2, h3, h4, blockquote');
+
+    elements.forEach((element, index) => {
+      const text = element.textContent?.trim() || '';
+
+      if (text.length < 30 && element.tagName === 'P') return;
+      if (element.closest('.related, .advertisement, .promo')) return;
+
+      const tagName = element.tagName.toLowerCase();
+      const isHeading = /^h[2-6]$/.test(tagName);
+
+      paragraphs.push({
+        id: `p-${index}`,
+        text,
+        html: element.innerHTML,
+        index,
+        element: this.getCssPath(element),
+        bounds: element.getBoundingClientRect(),
+        isQuote: tagName === 'blockquote',
+        isCode: false,
+        isHeading,
+        headingLevel: isHeading ? parseInt(tagName[1]) : undefined,
+        importance: this.scoreParagraph(element, text, index)
+      });
+    });
+
+    return paragraphs;
+  }
+
+  private extractTitle(doc: Document): string {
+    const selectors = [
+      'h1.headline',
+      'h1[itemprop="headline"]',
+      'h1.article-title',
+      'h1',
+      'meta[property="og:title"]'
+    ];
+
+    for (const selector of selectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        const content = element.getAttribute('content') || element.textContent;
+        if (content) return content.trim();
+      }
+    }
+
+    return doc.title;
+  }
+
+  private extractMetadata(doc: Document) {
+    return {
+      author: this.extractAuthor(doc),
+      publishDate: this.extractPublishDate(doc),
+      source: new URL(doc.location?.href || '').hostname,
+      extractedAt: new Date(),
+      tags: this.extractTags(doc),
+      category: this.extractCategory(doc),
+      description: doc.querySelector('meta[name="description"]')?.getAttribute('content'),
+      imageUrl: doc.querySelector('meta[property="og:image"]')?.getAttribute('content')
+    };
+  }
+
+  private extractAuthor(doc: Document): string {
+    const selectors = [
+      '[itemprop="author"] [itemprop="name"]',
+      '[rel="author"]',
+      '.byline-name',
+      '.author-name',
+      'meta[name="author"]',
+      '.by-line',
+      '.article-author'
+    ];
+
+    for (const selector of selectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        const content = element.getAttribute('content') || element.textContent;
+        if (content) {
+          return content.trim().replace(/^by\s+/i, '');
+        }
+      }
+    }
+
+    return '';
+  }
+
+  private extractPublishDate(doc: Document): Date | undefined {
+    const selectors = [
+      'time[datetime]',
+      'time[pubdate]',
+      '[itemprop="datePublished"]',
+      'meta[property="article:published_time"]',
+      'meta[name="publish_date"]',
+      '.publish-date',
+      '.article-date'
+    ];
+
+    for (const selector of selectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        const dateStr = element.getAttribute('datetime') ||
+                       element.getAttribute('content') ||
+                       element.textContent;
+
+        if (dateStr) {
+          const date = new Date(dateStr);
+          if (!isNaN(date.getTime())) {
+            return date;
+          }
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private extractCategory(doc: Document): string | undefined {
+    const selectors = [
+      'meta[property="article:section"]',
+      '[itemprop="articleSection"]',
+      '.section-name',
+      '.category'
+    ];
+
+    for (const selector of selectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        const content = element.getAttribute('content') || element.textContent;
+        if (content) return content.trim();
+      }
+    }
+
+    return undefined;
+  }
+
+  private extractTags(doc: Document): string[] {
+    const tags: string[] = [];
+    const tagSelectors = [
+      'meta[property="article:tag"]',
+      '[rel="tag"]',
+      '.tags a',
+      '.article-tags a'
+    ];
+
+    tagSelectors.forEach(selector => {
+      doc.querySelectorAll(selector).forEach(element => {
+        const tag = element.getAttribute('content') || element.textContent?.trim();
+        if (tag && !tags.includes(tag)) {
+          tags.push(tag);
+        }
+      });
+    });
+
+    return tags;
+  }
+
+  private getCssPath(element: Element): string {
+    const path: string[] = [];
+    let el: Element | null = element;
+
+    while (el && el.nodeType === Node.ELEMENT_NODE) {
+      let selector = el.nodeName.toLowerCase();
+
+      if (el.id) {
+        selector = '#' + el.id;
+        path.unshift(selector);
+        break;
+      } else {
+        let sibling = el;
+        let nth = 1;
+
+        while (sibling.previousElementSibling) {
+          sibling = sibling.previousElementSibling;
+          if (sibling.nodeName === el.nodeName) {
+            nth++;
+          }
+        }
+
+        if (nth > 1) {
+          selector += `:nth-of-type(${nth})`;
+        }
+      }
+
+      path.unshift(selector);
+      el = el.parentElement;
+    }
+
+    return path.join(' > ');
+  }
+
+  private scoreParagraph(element: Element, text: string, index: number): number {
+    let score = 0.7;
+
+    if (index < 3) score += 0.2;
+    else if (index < 5) score += 0.1;
+
+    const wordCount = text.split(/\s+/).length;
+    if (wordCount > 50) score += 0.1;
+
+    if (element.className.includes('caption')) score -= 0.3;
+    if (element.closest('aside, .sidebar')) score -= 0.4;
+
+    return Math.max(0.1, Math.min(1, score));
+  }
+}
+
+
+
+// src/adapters/github.ts
+import type { Paragraph, SiteAdapter } from '../types';
+
+export class GitHubAdapter implements SiteAdapter {
+  name = 'github';
+  patterns = [/github\.com/];
+  priority = 10;
+
+  extract(doc: Document, url: string) {
+    if (url.includes('/blob/') || url.includes('/tree/')) {
+      return this.extractCode(doc, url);
+    } else if (url.includes('/issues/') || url.includes('/pull/')) {
+      return this.extractIssue(doc, url);
+    } else if (url.includes('/wiki/')) {
+      return this.extractWiki(doc, url);
+    } else {
+      return this.extractReadme(doc, url);
+    }
+  }
+
+  private extractReadme(doc: Document, url: string) {
+    const readme = doc.querySelector('.markdown-body');
+    if (!readme) return {};
+
+    const title = doc.querySelector('[itemprop="name"]')?.textContent?.trim() ||
+                 doc.title.split('·')[0].trim();
+
+    const paragraphs = this.detectParagraphs(readme);
+    const cleanText = paragraphs.map((p) => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata: this.extractRepoMetadata(doc, url)
+    };
+  }
+
+  private extractCode(doc: Document, url: string) {
+    const codeContent = doc.querySelector('.blob-wrapper');
+    if (!codeContent) return {};
+
+    const title = doc.querySelector('.final-path')?.textContent?.trim() || '';
+    const code = codeContent.querySelector('pre')?.textContent || '';
+
+    const paragraphs: Paragraph[] = [{
+      id: 'code-0',
+      text: code,
+      html: `<pre><code>${this.escapeHtml(code)}</code></pre>`,
+      index: 0,
+      element: 'pre',
+      bounds: new DOMRect(),
+      isQuote: false,
+      isCode: true,
+      isHeading: false,
+      importance: 1
+    }];
+
+    return {
+      title,
+      paragraphs,
+      cleanText: code,
+      wordCount: code.split(/\s+/).length,
+      readingTime: Math.ceil(code.split('\n').length / 50),
+      metadata: {
+        source: 'github.com',
+        extractedAt: new Date(),
+        tags: [this.getFileExtension(title)]
+      }
+    };
+  }
+
+  private extractIssue(doc: Document, url: string) {
+    const title = doc.querySelector('.js-issue-title')?.textContent?.trim() || '';
+    const paragraphs: Paragraph[] = [];
+    let index = 0;
+
+    const issueBody = doc.querySelector('.comment-body');
+    if (issueBody) {
+      const bodyParagraphs = this.detectParagraphs(issueBody);
+      paragraphs.push(...bodyParagraphs);
+      index = bodyParagraphs.length;
+    }
+
+    doc.querySelectorAll('.timeline-comment .comment-body').forEach((comment, i) => {
+      if (i === 0) return;
+
+      const commentParagraphs = this.detectParagraphs(comment);
+      commentParagraphs.forEach((p) => {
+        p.index = index++;
+        p.id = `p-${p.index}`;
+      });
+      paragraphs.push(...commentParagraphs);
+    });
+
+    const cleanText = paragraphs.map((p) => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata: this.extractIssueMetadata(doc, url)
+    };
+  }
+
+  private extractWiki(doc: Document, url: string) {
+    const content = doc.querySelector('.markdown-body');
+    if (!content) return {};
+
+    const title = doc.querySelector('.gh-header-title')?.textContent?.trim() || '';
+    const paragraphs = this.detectParagraphs(content);
+    const cleanText = paragraphs.map((p) => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata: {
+        source: 'github.com',
+        extractedAt: new Date(),
+        tags: ['wiki']
+      }
+    };
+  }
+
+  detectParagraphs(container: Element): Paragraph[] {
+    const paragraphs: Paragraph[] = [];
+    const elements = container.querySelectorAll(
+      'p, h1, h2, h3, h4, h5, h6, pre, blockquote, ul, ol'
+    );
+
+    elements.forEach((element, index) => {
+      const text = element.textContent?.trim() || '';
+      if (text.length < 5) return;
+
+      const tagName = element.tagName.toLowerCase();
+      const isHeading = /^h[1-6]$/.test(tagName);
+      const isCode = tagName === 'pre' || element.querySelector('code') !== null;
+      const isList = tagName === 'ul' || tagName === 'ol';
+
+      paragraphs.push({
+        id: `p-${index}`,
+        text,
+        html: element.innerHTML,
+        index,
+        element: tagName,
+        bounds: element.getBoundingClientRect(),
+        isQuote: tagName === 'blockquote',
+        isCode,
+        isHeading,
+        headingLevel: isHeading ? parseInt(tagName[1]) : undefined,
+        importance: isHeading ? 0.9 : isCode ? 0.8 : 0.7
+      });
+    });
+
+    return paragraphs;
+  }
+
+  private extractRepoMetadata(doc: Document, url: string) {
+    const metadata: any = {
+      source: 'github.com',
+      extractedAt: new Date(),
+      tags: []
+    };
+
+    doc.querySelectorAll('.topic-tag').forEach((tag) => {
+      const topic = tag.textContent?.trim();
+      if (topic) metadata.tags.push(topic);
+    });
+
+    const language = doc.querySelector('[itemprop="programmingLanguage"]')?.textContent?.trim();
+    if (language) metadata.tags.push(language);
+
+    const stars = doc.querySelector('[aria-label*="starred"]')?.textContent?.trim();
+    if (stars) {
+      metadata.stars = parseInt(stars.replace(/[^\d]/g, ''));
+    }
+
+    return metadata;
+  }
+
+  private extractIssueMetadata(doc: Document, url: string) {
+    const metadata: any = {
+      source: 'github.com',
+      extractedAt: new Date(),
+      tags: []
+    };
+
+    const state = doc.querySelector('.State')?.textContent?.trim();
+    if (state) metadata.tags.push(state);
+
+    doc.querySelectorAll('.IssueLabel').forEach((label) => {
+      const text = label.textContent?.trim();
+      if (text) metadata.tags.push(text);
+    });
+
+    const author = doc.querySelector('.author')?.textContent?.trim();
+    if (author) metadata.author = author;
+
+    const timeElement = doc.querySelector('relative-time');
+    if (timeElement) {
+      const datetime = timeElement.getAttribute('datetime');
+      if (datetime) metadata.publishDate = new Date(datetime);
+    }
+
+    return metadata;
+  }
+
+  private getFileExtension(filename: string): string {
+    const parts = filename.split('.');
+    return parts.length > 1 ? parts[parts.length - 1] : '';
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+}
+
+
+
+// src/adapters/substack.ts
+import type { SiteAdapter, Paragraph } from '../types';
+
+export class SubstackAdapter implements SiteAdapter {
+  name = 'substack';
+  patterns = [/\.substack\.com/, /substack\.com/];
+  priority = 10;
+
+  extract(doc: Document, url: string) {
+    const article = doc.querySelector('.post, article');
+    if (!article) return {};
+
+    const title = doc.querySelector('h1.post-title, h1')?.textContent?.trim() || '';
+    const paragraphs = this.detectParagraphs(doc);
+    const cleanText = paragraphs.map(p => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata: {
+        source: 'substack.com',
+        extractedAt: new Date(),
+        tags: []
+      }
+    };
+  }
+
+  detectParagraphs(doc: Document): Paragraph[] {
+    const paragraphs: Paragraph[] = [];
+    const content = doc.querySelector('.body, .post-content, article');
+    if (!content) return paragraphs;
+
+    const elements = content.querySelectorAll('p, h1, h2, h3, h4, blockquote, pre');
+
+    elements.forEach((element, index) => {
+      const text = element.textContent?.trim() || '';
+      if (text.length < 10) return;
+
+      const tagName = element.tagName.toLowerCase();
+      const isHeading = /^h[1-6]$/.test(tagName);
+
+      paragraphs.push({
+        id: `p-${index}`,
+        text,
+        html: element.innerHTML,
+        index,
+        element: tagName,
+        bounds: element.getBoundingClientRect(),
+        isQuote: tagName === 'blockquote',
+        isCode: tagName === 'pre',
+        isHeading,
+        headingLevel: isHeading ? parseInt(tagName[1]) : undefined,
+        importance: isHeading ? 0.9 : 0.7
+      });
+    });
+
+    return paragraphs;
+  }
+}
+
+// src/adapters/wikipedia.ts
+import type { SiteAdapter, Paragraph, Table } from '../types';
+
+export class WikipediaAdapter implements SiteAdapter {
+  name = 'wikipedia';
+  patterns = [/wikipedia\.org/, /wikimedia\.org/];
+  priority = 10;
+
+  extract(doc: Document, url: string) {
+    const content = doc.querySelector('#mw-content-text .mw-parser-output');
+    if (!content) return {};
+
+    const title = doc.querySelector('#firstHeading')?.textContent?.trim() || '';
+    const paragraphs = this.detectParagraphs(doc);
+    const cleanText = paragraphs.map((p) => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata: {
+        source: 'wikipedia.org',
+        extractedAt: new Date(),
+        tags: []
+      }
+    };
+  }
+
+  detectParagraphs(doc: Document): Paragraph[] {
+    const paragraphs: Paragraph[] = [];
+    const content = doc.querySelector('#mw-content-text .mw-parser-output');
+    if (!content) return paragraphs;
+
+    const elements = content.querySelectorAll('p, h2, h3, h4, blockquote, .mw-headline');
+
+    elements.forEach((element, index) => {
+      const text = element.textContent?.trim() || '';
+      if (text.length < 10) return;
+
+      if (element.querySelector('.mw-editsection')) {
+        element.querySelector('.mw-editsection')?.remove();
+      }
+
+      const tagName = element.tagName.toLowerCase();
+      const isHeading = element.classList.contains('mw-headline') || /^h[2-6]$/.test(tagName);
+
+      paragraphs.push({
+        id: `p-${index}`,
+        text: element.textContent?.trim() || '',
+        html: element.innerHTML,
+        index,
+        element: tagName,
+        bounds: element.getBoundingClientRect(),
+        isQuote: tagName === 'blockquote',
+        isCode: false,
+        isHeading,
+        headingLevel: isHeading ? this.getHeadingLevel(element) : undefined,
+        importance: isHeading ? 0.9 : 0.7
+      });
+    });
+
+    return paragraphs;
+  }
+
+  private getHeadingLevel(element: Element): number {
+    const tagName = element.tagName;
+    if (/^H[2-6]$/.test(tagName)) {
+      return parseInt(tagName[1]);
+    }
+    const parent = element.parentElement;
+    if (parent && /^H[2-6]$/.test(parent.tagName)) {
+      return parseInt(parent.tagName[1]);
+    }
+    return 2;
+  }
+}
+
+// src/adapters/linkedin.ts
+import type { Paragraph, SiteAdapter } from '../types';
+
+export class LinkedInAdapter implements SiteAdapter {
+  name = 'linkedin';
+  patterns = [/linkedin\.com/];
+  priority = 10;
+
+  extract(doc: Document, url: string) {
+    if (url.includes('/pulse/') || url.includes('/article/')) {
+      return this.extractArticle(doc, url);
+    } else if (url.includes('/posts/')) {
+      return this.extractPost(doc, url);
+    } else {
+      return this.extractProfile(doc, url);
+    }
+  }
+
+  private extractArticle(doc: Document, url: string) {
+    const article = doc.querySelector('.article-content__body') ||
+                   doc.querySelector('[data-test-id="article-content"]');
+
+    if (!article) return {};
+
+    const title = doc.querySelector('.article-title')?.textContent?.trim() || '';
+    const paragraphs = this.detectParagraphs(article);
+    const cleanText = paragraphs.map((p) => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata: {
+        source: 'linkedin.com',
+        extractedAt: new Date(),
+        tags: []
+      }
+    };
+  }
+
+  private extractPost(doc: Document, url: string) {
+    const postContent = doc.querySelector('.feed-shared-update-v2__description') ||
+                       doc.querySelector('[data-test-id="post-content"]');
+
+    if (!postContent) return {};
+
+    const title = 'LinkedIn Post';
+    const text = postContent.textContent?.trim() || '';
+
+    const paragraphs: Paragraph[] = [{
+      id: 'post-0',
+      text,
+      html: postContent.innerHTML,
+      index: 0,
+      element: '.feed-shared-update-v2__description',
+      bounds: postContent.getBoundingClientRect(),
+      isQuote: false,
+      isCode: false,
+      isHeading: false,
+      importance: 0.8
+    }];
+
+    return {
+      title,
+      paragraphs,
+      cleanText: text,
+      wordCount: text.split(/\s+/).length,
+      readingTime: 1,
+      metadata: {
+        source: 'linkedin.com',
+        extractedAt: new Date(),
+        tags: []
+      }
+    };
+  }
+
+  private extractProfile(doc: Document, url: string) {
+    const sections: Paragraph[] = [];
+    let index = 0;
+
+    const about = doc.querySelector('.pv-about-section');
+    if (about) {
+      const text = about.textContent?.trim() || '';
+      sections.push({
+        id: `section-${index}`,
+        text,
+        html: about.innerHTML,
+        index: index++,
+        element: '.pv-about-section',
+        bounds: about.getBoundingClientRect(),
+        isQuote: false,
+        isCode: false,
+        isHeading: false,
+        importance: 0.8
+      });
+    }
+
+    const name = doc.querySelector('.pv-top-card--list li:first-child')?.textContent?.trim() || 'LinkedIn Profile';
+    const cleanText = sections.map((p) => p.text).join('\n\n');
+
+    return {
+      title: name,
+      paragraphs: sections,
+      cleanText,
+      wordCount: cleanText.split(/\s+/).length,
+      readingTime: Math.ceil(cleanText.split(/\s+/).length / 200),
+      metadata: {
+        source: 'linkedin.com',
+        extractedAt: new Date(),
+        tags: ['profile']
+      }
+    };
+  }
+
+  detectParagraphs(container: Element): Paragraph[] {
+    const paragraphs: Paragraph[] = [];
+    const elements = container.querySelectorAll('p, h1, h2, h3, h4, blockquote, li');
+
+    elements.forEach((element, index) => {
+      const text = element.textContent?.trim() || '';
+      if (text.length < 10) return;
+
+      const tagName = element.tagName.toLowerCase();
+      const isHeading = /^h[1-4]$/.test(tagName);
+
+      paragraphs.push({
+        id: `p-${index}`,
+        text,
+        html: element.innerHTML,
+        index,
+        element: tagName,
+        bounds: element.getBoundingClientRect(),
+        isQuote: tagName === 'blockquote',
+        isCode: false,
+        isHeading,
+        headingLevel: isHeading ? parseInt(tagName[1]) : undefined,
+        importance: isHeading ? 0.9 : 0.7
+      });
+    });
+
+    return paragraphs;
+  }
+}
+
+// src/adapters/reddit.ts
+import type { Paragraph, SiteAdapter } from '../types';
+
+export class RedditAdapter implements SiteAdapter {
+  name = 'reddit';
+  patterns = [/reddit\.com/, /redd\.it/];
+  priority = 10;
+
+  extract(doc: Document, url: string) {
+    const title = this.extractTitle(doc);
+    const paragraphs = this.detectParagraphs(doc);
+    const cleanText = paragraphs.map(p => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata: {
+        source: 'reddit.com',
+        extractedAt: new Date(),
+        tags: []
+      }
+    };
+  }
+
+  detectParagraphs(doc: Document): Paragraph[] {
+    const paragraphs: Paragraph[] = [];
+    let index = 0;
+
+    const postContent = doc.querySelector('[data-test-id="post-content"]');
+    if (postContent) {
+      const text = postContent.textContent?.trim() || '';
+      if (text.length > 10) {
+        paragraphs.push({
+          id: `p-${index}`,
+          text,
+          html: postContent.innerHTML,
+          index: index++,
+          element: '[data-test-id="post-content"]',
+          bounds: postContent.getBoundingClientRect(),
+          isQuote: false,
+          isCode: false,
+          isHeading: false,
+          importance: 0.9
+        });
+      }
+    }
+
+    const comments = doc.querySelectorAll('[data-testid="comment"]');
+    comments.forEach((comment) => {
+      const commentBody = comment.querySelector('.RichTextJSON-root');
+      if (commentBody) {
+        const text = commentBody.textContent?.trim() || '';
+        if (text.length > 10) {
+          const author = comment.querySelector('[data-testid="comment_author_link"]')?.textContent?.trim();
+          
+          paragraphs.push({
+            id: `p-${index}`,
+            text: author ? `[${author}]: ${text}` : text,
+            html: commentBody.innerHTML,
+            index: index++,
+            element: `[data-testid="comment"]:nth-of-type(${index})`,
+            bounds: commentBody.getBoundingClientRect(),
+            isQuote: true,
+            isCode: false,
+            isHeading: false,
+            importance: 0.5
+          });
+        }
+      }
+    });
+
+    return paragraphs;
+  }
+
+  private extractTitle(doc: Document): string {
+    return doc.querySelector('h1')?.textContent?.trim() ||
+           doc.querySelector('[data-test-id="post-title"]')?.textContent?.trim() ||
+           doc.title.split('-')[0].trim();
+  }
+}
+
+// src/adapters/twitter.ts
+import type { Paragraph, SiteAdapter } from '../types';
+
+export class TwitterAdapter implements SiteAdapter {
+  name = 'twitter';
+  patterns = [/twitter\.com/, /x\.com/];
+  priority = 10;
+
+  extract(doc: Document, url: string) {
+    const tweets = this.extractTweets(doc);
+    const title = this.extractTitle(doc, tweets);
+    const paragraphs = this.tweetsToParagraphs(tweets);
+    const cleanText = paragraphs.map((p) => p.text).join('\n\n');
+    const wordCount = cleanText.split(/\s+/).length;
+
+    return {
+      title,
+      paragraphs,
+      cleanText,
+      wordCount,
+      readingTime: Math.ceil(wordCount / 200),
+      metadata: {
+        source: 'twitter.com',
+        extractedAt: new Date(),
+        tags: []
+      }
+    };
+  }
+
+  private extractTweets(doc: Document): any[] {
+    const tweets: any[] = [];
+
+    const tweetSelectors = [
+      'article[data-testid="tweet"]',
+      '[data-testid="tweetText"]',
+      '.tweet',
+      '[role="article"]'
+    ];
+
+    for (const selector of tweetSelectors) {
+      const elements = doc.querySelectorAll(selector);
+      if (elements.length > 0) {
+        elements.forEach((element) => {
+          const text = this.extractTweetText(element);
+          const author = this.extractTweetAuthor(element);
+          const time = this.extractTweetTime(element);
+
+          if (text) {
+            tweets.push({ text, author, time, element });
+          }
+        });
+        break;
+      }
+    }
+
+    return tweets;
+  }
+
+  private extractTweetText(element: Element): string {
+    const textElement = element.querySelector('[data-testid="tweetText"]') ||
+                       element.querySelector('.tweet-text') ||
+                       element.querySelector('[lang]');
+
+    return textElement?.textContent?.trim() || '';
+  }
+
+  private extractTweetAuthor(element: Element): string {
+    const authorElement = element.querySelector('[data-testid="User-Names"]') ||
+                         element.querySelector('.username') ||
+                         element.querySelector('[href^="/"]');
+
+    return authorElement?.textContent?.trim() || '';
+  }
+
+  private extractTweetTime(element: Element): string {
+    const timeElement = element.querySelector('time');
+    return timeElement?.getAttribute('datetime') || '';
+  }
+
+  private tweetsToParagraphs(tweets: any[]): Paragraph[] {
+    return tweets.map((tweet, index) => ({
+      id: `tweet-${index}`,
+      text: tweet.text,
+      html: `<p>${tweet.text}</p>`,
+      index,
+      element: 'article',
+      bounds: tweet.element?.getBoundingClientRect() || new DOMRect(),
+      isQuote: index > 0,
+      isCode: false,
+      isHeading: false,
+      importance: index === 0 ? 0.9 : 0.7,
+      metadata: {
+        author: tweet.author,
+        time: tweet.time
+      }
+    }));
+  }
+
+  private extractTitle(doc: Document, tweets: any[]): string {
+    if (tweets.length > 0) {
+      const firstTweet = tweets[0].text;
+      return firstTweet.length > 100 ? firstTweet.substring(0, 97) + '...' : firstTweet;
+    }
+
+    return doc.title.split('/')[0].trim();
+  }
+}
+
+
+
+
+// src/index.ts
+import { ContentExtractorService } from './core/content-extractor-service';
+
+// Core exports
+export { ContentExtractorService };
+export { TextExtractor } from './extractors/text-extractor';
+export { ParagraphDetector } from './detectors/paragraph-detector';
+export { ContentCleaner } from './cleaners/content-cleaner';
+
+// Site adapters
+export {
+  MediumAdapter,
+  SubstackAdapter,
+  GenericNewsAdapter,
+  GitHubAdapter,
+  WikipediaAdapter,
+  LinkedInAdapter,
+  RedditAdapter,
+  TwitterAdapter,
+  getSiteAdapter,
+  registerAdapter,
+  unregisterAdapter,
+  getRegisteredAdapters,
+  clearAdapters,
+  getAdapterByName
+} from './adapters';
+
+// Types
+export type {
+  ExtractedContent,
+  Paragraph,
+  Table,
+  List,
+  ListItem,
+  Embed,
+  StructuredData,
+  ContentQuality,
+  ReadabilityScore,
+  Entity,
+  Section,
+  ContentMetadata,
+  ImageMetadata,
+  SocialMetadata,
+  SiteAdapter,
+  CleaningOptions,
+  ExtractionOptions,
+  CustomExtractor,
+  ExtractionEvents,
+  ExtractionProgress,
+  CacheOptions,
+  ContentExtractorPlugin,
+  ExtractionResult,
+  StreamingOptions,
+  BatchOptions
+} from './types';
+
+// Default instance for convenience
+export const contentExtractor = new ContentExtractorService();
+
+// Default export
+export default ContentExtractorService;
+
+
+
+// tests/content-extractor.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { ContentExtractorService } from '../src';
+import type { ExtractedContent, ExtractionOptions } from '../src/types';
+
+// Mock fetch for testing
+global.fetch = vi.fn();
+
+describe('ContentExtractorService', () => {
+  let extractor: ContentExtractorService;
+
+  beforeEach(() => {
+    extractor = new ContentExtractorService({
+      enabled: true,
+      persistent: false
+    });
+    vi.clearAllMocks();
+  });
+
+  describe('Core Extraction', () => {
+    it('should extract content from URL successfully', async () => {
+      const mockHtml = `
+        <html>
+          <head><title>Test Article</title></head>
+          <body>
+            <article>
+              <h1>Test Article Title</h1>
+              <p>This is a test paragraph with some content.</p>
+              <p>Another paragraph with more information.</p>
+            </article>
+          </body>
+        </html>
+      `;
+
+      (global.fetch as any).mockResolvedValueOnce({
+        text: async () => mockHtml
+      });
+
+      const result = await extractor.extract('https://example.com/article');
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.title).toBe('Test Article Title');
+        expect(result.data.paragraphs).toHaveLength(2);
+        expect(result.data.wordCount).toBeGreaterThan(0);
+      }
+    });
+
+    it('should handle extraction errors gracefully', async () => {
+      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await extractor.extract('https://example.com/article');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toBe('Network error');
+      }
+    });
+
+    it('should extract from HTML string', async () => {
+      const html = '<h1>Title</h1><p>Content</p>';
+      const result = await extractor.extractFromHTML(html, 'https://example.com');
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.title).toBe('Title');
+        expect(result.data.paragraphs).toHaveLength(1);
+      }
+    });
+  });
+
+  describe('Cache Management', () => {
+    it('should cache extraction results', async () => {
+      const mockHtml = '<h1>Cached Content</h1>';
+      (global.fetch as any).mockResolvedValueOnce({
+        text: async () => mockHtml
+      });
+
+      // First extraction
+      await extractor.extract('https://example.com/cached');
+
+      // Second extraction should use cache
+      const result = await extractor.extract('https://example.com/cached');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(result.success).toBe(true);
+    });
+
+    it('should provide accurate cache statistics', async () => {
+      const mockHtml = '<h1>Stats Test</h1>';
+      (global.fetch as any).mockResolvedValue({
+        text: async () => mockHtml
+      });
+
+      // Make some requests
+      await extractor.extract('https://example.com/1');
+      await extractor.extract('https://example.com/1'); // Cache hit
+      await extractor.extract('https://example.com/2');
+
+      const stats = extractor.getCacheStats();
+
+      expect(stats.hits).toBe(1);
+      expect(stats.misses).toBe(2);
+      expect(stats.hitRate).toBeCloseTo(0.333, 2);
+    });
+  });
+
+  describe('Plugin System', () => {
+    it('should register and execute plugins', async () => {
+      const mockPlugin = {
+        name: 'test-plugin',
+        version: '1.0.0',
+        afterExtract: vi.fn((content) => ({
+          ...content,
+          metadata: {
+            ...content.metadata,
+            pluginProcessed: true
+          }
+        }))
+      };
+
+      await extractor.registerPlugin(mockPlugin);
+
+      const mockHtml = '<h1>Plugin Test</h1>';
+      (global.fetch as any).mockResolvedValueOnce({
+        text: async () => mockHtml
+      });
+
+      const result = await extractor.extract('https://example.com/plugin');
+
+      expect(mockPlugin.afterExtract).toHaveBeenCalled();
+      if (result.success) {
+        expect((result.data.metadata as any).pluginProcessed).toBe(true);
+      }
+    });
+  });
+
+  describe('Batch Extraction', () => {
+    it('should extract multiple URLs concurrently', async () => {
+      const urls = [
+        'https://example.com/1',
+        'https://example.com/2',
+        'https://example.com/3'
+      ];
+
+      (global.fetch as any).mockResolvedValue({
+        text: async () => '<h1>Batch Test</h1>'
+      });
+
+      const results = await extractor.extractBatch(urls, {}, 2);
+
+      expect(results).toHaveLength(3);
+      expect(results.every(r => r.success)).toBe(true);
+    });
+  });
+
+  describe('Export Functionality', () => {
+    it('should export content as Markdown', async () => {
+      const content: ExtractedContent = {
+        title: 'Test Article',
+        paragraphs: [{
+          id: 'p1',
+          text: 'First paragraph',
+          html: '<p>First paragraph</p>',
+          index: 0,
+          element: 'p',
+          bounds: new DOMRect(),
+          isQuote: false,
+          isCode: false,
+          isHeading: false,
+          importance: 0.7
+        }],
+        cleanText: 'First paragraph',
+        metadata: {
+          author: 'Test Author',
+          publishDate: new Date('2024-01-01'),
+          source: 'example.com',
+          extractedAt: new Date(),
+          tags: []
+        },
+        sections: [],
+        readingTime: 1,
+        wordCount: 2,
+        language: 'en',
+        quality: {
+          score: 0.8,
+          textDensity: 0.8,
+          linkDensity: 0.1,
+          adDensity: 0,
+          readabilityScore: 0.9,
+          structureScore: 0.8,
+          completeness: 0.9
+        },
+        fingerprint: 'abc123'
+      };
+
+      const markdown = await extractor.exportContent(content, 'markdown');
+
+      expect(markdown).toContain('# Test Article');
+      expect(markdown).toContain('**Author:** Test Author');
+      expect(markdown).toContain('First paragraph');
+    });
+  });
+
+  describe('Content Validation', () => {
+    it('should validate extracted content', () => {
+      const validContent: ExtractedContent = {
+        title: 'Valid Article',
+        paragraphs: Array(5).fill({
+          id: 'p1',
+          text: 'This is a valid paragraph with enough content.',
+          html: '<p>This is a valid paragraph with enough content.</p>',
+          index: 0,
+          element: 'p',
+          bounds: new DOMRect(),
+          isQuote: false,
+          isCode: false,
+          isHeading: false,
+          importance: 0.7
+        }),
+        cleanText: 'Content '.repeat(100),
+        wordCount: 100,
+        quality: { score: 0.8 } as any,
+        metadata: {} as any,
+        sections: [],
+        readingTime: 1,
+        language: 'en',
+        fingerprint: 'abc'
+      };
+
+      const invalidContent: ExtractedContent = {
+        ...validContent,
+        title: '',
+        paragraphs: [],
+        wordCount: 10,
+        quality: { score: 0.2 } as any
+      };
+
+      const validResult = extractor.validateContent(validContent);
+      const invalidResult = extractor.validateContent(invalidContent);
+
+      expect(validResult.valid).toBe(true);
+      expect(validResult.errors).toHaveLength(0);
+
+      expect(invalidResult.valid).toBe(false);
+      expect(invalidResult.errors).toContain('Missing title');
+      expect(invalidResult.errors).toContain('No paragraphs extracted');
+    });
+  });
+});
+
+
+
+// examples/basic-usage.ts
+import { contentExtractor, ContentExtractorService } from '@content-extractor/core';
+import type { ExtractionOptions, ExtractionResult } from '@content-extractor/core';
+
+// Example 1: Simple extraction using default instance
+async function simpleExtraction() {
+  console.log('=== Simple Extraction Example ===');
+  
+  const result = await contentExtractor.extract('https://medium.com/@example/article');
+  
+  if (result.success) {
+    console.log('Title:', result.data.title);
+    console.log('Author:', result.data.metadata.author);
+    console.log('Word Count:', result.data.wordCount);
+    console.log('Reading Time:', result.data.readingTime, 'minutes');
+    console.log('Quality Score:', result.data.quality.score.toFixed(2));
+    console.log('First paragraph:', result.data.paragraphs[0]?.text.substring(0, 100) + '...');
+  } else {
+    console.error('Extraction failed:', result.error);
+  }
+}
+
+// Example 2: Custom configuration
+async function customConfiguration() {
+  console.log('\n=== Custom Configuration Example ===');
+  
+  const extractor = new ContentExtractorService({
+    enabled: true,
+    ttl: 7200000, // 2 hours
+    maxSize: 100, // 100MB cache
+    strategy: 'lru',
+    persistent: true
+  });
+
+  const options: ExtractionOptions = {
+    cleaningOptions: {
+      removeAds: true,
+      removeNavigation: true,
+      preserveImages: true,
+      preserveVideos: false,
+      aggressiveMode: true
+    },
+    includeMetadata: true,
+    detectSections: true,
+    extractTables: true,
+    extractLists: true,
+    calculateReadability: true,
+    extractEntities: true,
+    minParagraphLength: 50,
+    timeout: 15000
+  };
+
+  const result = await extractor.extract('https://en.wikipedia.org/wiki/Machine_learning', options);
+
+  if (result.success) {
+    console.log('Sections found:', result.data.sections.length);
+    console.log('Tables found:', result.data.tables?.length || 0);
+    console.log('Lists found:', result.data.lists?.length || 0);
+    
+    // Show readability metrics
+    if (result.data.paragraphs[0]?.readability) {
+      const readability = result.data.paragraphs[0].readability;
+      console.log('Readability Metrics:');
+      console.log('  - Flesch-Kincaid:', readability.fleschKincaid.toFixed(2));
+      console.log('  - Gunning Fog:', readability.gunningFog.toFixed(2));
+      console.log('  - Avg Sentence Length:', readability.avgSentenceLength.toFixed(2));
+    }
+    
+    // Show extracted entities
+    const entities = result.data.paragraphs.flatMap(p => p.entities || []);
+    const entityTypes = new Map<string, number>();
+    entities.forEach(e => entityTypes.set(e.type, (entityTypes.get(e.type) || 0) + 1));
+    console.log('Entities found:', Object.fromEntries(entityTypes));
+  }
+}
+
+// Example 3: Batch extraction with progress
+async function batchExtraction() {
+  console.log('\n=== Batch Extraction Example ===');
+  
+  const urls = [
+    'https://github.com/microsoft/vscode',
+    'https://github.com/facebook/react',
+    'https://github.com/tensorflow/tensorflow'
+  ];
+
+  const results = await contentExtractor.extractBatch(urls, {
+    cleaningOptions: { removeAds: true },
+    includeMetadata: true
+  }, 2); // Process 2 URLs concurrently
+
+  results.forEach((result, index) => {
+    console.log(`\nRepository ${index + 1}:`);
+    if (result.success) {
+      console.log('  Title:', result.data.title);
+      console.log('  Stars:', (result.data.metadata as any).stars || 'N/A');
+      console.log('  Language:', result.data.language);
+    } else {
+      console.log('  Failed:', result.error.message);
+    }
+  });
+}
+
+// Example 4: Streaming extraction for large documents
+async function streamingExtraction() {
+  console.log('\n=== Streaming Extraction Example ===');
+  
+  let totalParagraphs = 0;
+  let totalWords = 0;
+
+  const stream = contentExtractor.extractStream(
+    'https://example.com/very-long-document',
+    {
+      chunkSize: 5,
+      onProgress: (chunk) => {
+        const paragraphCount = chunk.paragraphs?.length || 0;
+        const wordCount = chunk.wordCount || 0;
+        console.log(`Received chunk: ${paragraphCount} paragraphs, ${wordCount} words`);
+      }
+    }
+  );
+
+  try {
+    for await (const chunk of stream) {
+      totalParagraphs += chunk.paragraphs?.length || 0;
+      totalWords += chunk.wordCount || 0;
+      
+      // Process chunk in real-time
+      // For example, update UI or save to database
+    }
+    
+    console.log(`Streaming complete: ${totalParagraphs} paragraphs, ${totalWords} words total`);
+  } catch (error) {
+    console.error('Streaming error:', error);
+  }
+}
+
+// Example 5: Using plugins
+async function pluginExample() {
+  console.log('\n=== Plugin Example ===');
+  
+  const extractor = new ContentExtractorService();
+
+  // Create a word frequency plugin
+  const wordFrequencyPlugin = {
+    name: 'word-frequency',
+    version: '1.0.0',
+    
+    afterExtract(content: any) {
+      const words = content.cleanText.toLowerCase().split(/\s+/);
+      const frequency = new Map<string, number>();
+      
+      words.forEach(word => {
+        const cleaned = word.replace(/[^\w]/g, '');
+        if (cleaned.length > 3) {
+          frequency.set(cleaned, (frequency.get(cleaned) || 0) + 1);
+        }
+      });
+      
+      // Add top 10 words to metadata
+      const topWords = Array.from(frequency.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([word, count]) => ({ word, count }));
+      
+      content.metadata.topWords = topWords;
+      return content;
+    }
+  };
+
+  await extractor.registerPlugin(wordFrequencyPlugin);
+
+  const result = await extractor.extract('https://example.com/article');
+  
+  if (result.success) {
+    console.log('Top words in article:');
+    (result.data.metadata as any).topWords?.forEach((item: any) => {
+      console.log(`  "${item.word}": ${item.count} times`);
+    });
+  }
+}
+
+// Example 6: Export in different formats
+async function exportExample() {
+  console.log('\n=== Export Example ===');
+  
+  const result = await contentExtractor.extract('https://example.com/article');
+  
+  if (result.success) {
+    // Export as Markdown
+    const markdown = await contentExtractor.exportContent(result.data, 'markdown');
+    console.log('Markdown preview:');
+    console.log(markdown.substring(0, 200) + '...\n');
+    
+    // Export as HTML
+    const html = await contentExtractor.exportContent(result.data, 'html');
+    console.log('HTML preview:');
+    console.log(html.substring(0, 200) + '...\n');
+    
+    // Save to files
+    // fs.writeFileSync('article.md', markdown);
+    // fs.writeFileSync('article.html', html);
+  }
+}
+
+// Example 7: Custom site adapter
+async function customAdapterExample() {
+  console.log('\n=== Custom Adapter Example ===');
+  
+  const { registerAdapter } = await import('@content-extractor/core');
+  
+  // Create adapter for a custom blog platform
+  const myBlogAdapter = {
+    name: 'myblog',
+    patterns: [/myblog\.example\.com/],
+    priority: 15,
+    
+    extract(doc: Document, url: string) {
+      const title = doc.querySelector('.blog-title')?.textContent?.trim() || '';
+      const content = doc.querySelector('.blog-content');
+      const author = doc.querySelector('.blog-author')?.textContent?.trim();
+      const date = doc.querySelector('.blog-date')?.getAttribute('data-date');
+      
+      const paragraphs = Array.from(content?.querySelectorAll('p') || []).map((p, i) => ({
+        id: `p-${i}`,
+        text: p.textContent?.trim() || '',
+        html: p.innerHTML,
+        index: i,
+        element: 'p',
+        bounds: p.getBoundingClientRect(),
+        isQuote: false,
+        isCode: false,
+        isHeading: false,
+        importance: 0.7
+      }));
+      
+      return {
+        title,
+        paragraphs,
+        cleanText: paragraphs.map(p => p.text).join('\n\n'),
+        metadata: {
+          author,
+          publishDate: date ? new Date(date) : undefined,
+          source: 'myblog.example.com',
+          extractedAt: new Date(),
+          tags: []
+        }
+      };
+    }
+  };
+  
+  registerAdapter(myBlogAdapter);
+  
+  // Now the adapter will be used automatically
+  const result = await contentExtractor.extract('https://myblog.example.com/post/123');
+  console.log('Custom adapter result:', result.success ? result.data.title : 'Failed');
+}
+
+// Example 8: Rate limiting and caching
+async function performanceExample() {
+  console.log('\n=== Performance Example ===');
+  
+  // Check rate limit before making request
+  const url = 'https://api.example.com/article';
+  const rateLimitInfo = contentExtractor.getRateLimitInfo(url);
+  console.log('Rate limit info:', rateLimitInfo);
+  
+  if (rateLimitInfo.remaining === 0) {
+    const waitTime = rateLimitInfo.resetTime - Date.now();
+    console.log(`Rate limited. Wait ${Math.ceil(waitTime / 1000)} seconds.`);
+    return;
+  }
+  
+  // First request (cache miss)
+  console.time('First request');
+  const result1 = await contentExtractor.extract(url);
+  console.timeEnd('First request');
+  
+  // Second request (cache hit)
+  console.time('Second request (cached)');
+  const result2 = await contentExtractor.extract(url);
+  console.timeEnd('Second request (cached)');
+  
+  // Show cache statistics
+  const cacheStats = contentExtractor.getCacheStats();
+  console.log('Cache statistics:', cacheStats);
+}
+
+// Run examples
+async function runExamples() {
+  try {
+    await simpleExtraction();
+    await customConfiguration();
+    await batchExtraction();
+    // await streamingExtraction(); // Uncomment to test with real URL
+    await pluginExample();
+    await exportExample();
+    await customAdapterExample();
+    await performanceExample();
+  } catch (error) {
+    console.error('Example error:', error);
+  }
+}
+
+// Run if called directly
+if (require.main === module) {
+  runExamples();
+}
+
+
+
+// tests/setup.ts
+import { vi } from 'vitest';
+
+// Mock browser APIs for testing
+global.DOMRect = class DOMRect {
+  constructor(
+    public x = 0,
+    public y = 0,
+    public width = 0,
+    public height = 0
+  ) {}
+
+  get top() { return this.y; }
+  get left() { return this.x; }
+  get bottom() { return this.y + this.height; }
+  get right() { return this.x + this.width; }
+
+  toJSON() {
+    return {
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
+      top: this.top,
+      left: this.left,
+      bottom: this.bottom,
+      right: this.right
+    };
+  }
+};
+
+// Mock window object if needed
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'innerHeight', {
+    writable: true,
+    configurable: true,
+    value: 768
+  });
+
+  Object.defineProperty(window, 'innerWidth', {
+    writable: true,
+    configurable: true,
+    value: 1024
+  });
+}
+
+// Mock performance API
+if (typeof performance === 'undefined') {
+  (global as any).performance = {
+    now: () => Date.now()
+  };
+}
+
+// Suppress console errors in tests
+console.error = vi.fn();
+console.warn = vi.fn();
+
+
+// src/index.d.ts
+export * from './types';
+export * from './core/content-extractor-service';
+export * from './extractors/text-extractor';
+export * from './detectors/paragraph-detector';
+export * from './cleaners/content-cleaner';
+export * from './adapters';
+
+declare module '@content-extractor/core' {
+  export const contentExtractor: ContentExtractorService;
+  export default ContentExtractorService;
+}
