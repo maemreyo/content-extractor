@@ -1,4 +1,4 @@
-# Contributing to @content-extractor/core
+# Contributing to @matthew.ngo/content-extractor
 
 Thank you for your interest in contributing to Content Extractor! This document provides guidelines and instructions for contributing.
 

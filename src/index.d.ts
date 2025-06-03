@@ -5,7 +5,7 @@ export * from './detectors/paragraph-detector';
 export * from './cleaners/content-cleaner';
 export * from './adapters';
 
-declare module '@content-extractor/core' {
+declare module '@matthew.ngo/content-extractor' {
   export const contentExtractor: ContentExtractorService;
   export default ContentExtractorService;
 }

@@ -1,5 +1,5 @@
-import { contentExtractor, ContentExtractorService } from '@content-extractor/core';
-import type { ExtractionOptions, ExtractionResult } from '@content-extractor/core';
+import { contentExtractor, ContentExtractorService } from '@matthew.ngo/content-extractor';
+import type { ExtractionOptions, ExtractionResult } from '@matthew.ngo/content-extractor';
 
 // Example 1: Simple extraction using default instance
 async function simpleExtraction() {
@@ -206,7 +206,7 @@ async function exportExample() {
 async function customAdapterExample() {
   console.log('\n=== Custom Adapter Example ===');
   
-  const { registerAdapter } = await import('@content-extractor/core');
+  const { registerAdapter } = await import('@matthew.ngo/content-extractor');
   
   // Create adapter for a custom blog platform
   const myBlogAdapter = {

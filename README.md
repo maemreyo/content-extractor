@@ -1,4 +1,4 @@
-# @content-extractor/core
+# @matthew.ngo/content-extractor
 
 A powerful, flexible content extraction library for web pages with support for multiple extraction engines, site-specific adapters, and content analysis.
 
@@ -16,17 +16,17 @@ A powerful, flexible content extraction library for web pages with support for m
 ## Installation
 
 ```bash
-npm install @content-extractor/core
+npm install @matthew.ngo/content-extractor
 # or
-yarn add @content-extractor/core
+yarn add @matthew.ngo/content-extractor
 # or
-pnpm add @content-extractor/core
+pnpm add @matthew.ngo/content-extractor
 ```
 
 ## Quick Start
 
 ```typescript
-import { contentExtractor } from '@content-extractor/core';
+import { contentExtractor } from '@matthew.ngo/content-extractor';
 
 // Extract content from a URL
 const result = await contentExtractor.extract('https://example.com/article');
@@ -44,7 +44,7 @@ if (result.success) {
 ### Basic Extraction
 
 ```typescript
-import { ContentExtractorService } from '@content-extractor/core';
+import { ContentExtractorService } from '@matthew.ngo/content-extractor';
 
 const extractor = new ContentExtractorService({
   enabled: true,
@@ -171,7 +171,7 @@ import {
   MediumAdapter, 
   GitHubAdapter,
   registerAdapter 
-} from '@content-extractor/core';
+} from '@matthew.ngo/content-extractor';
 
 // Adapters are automatically used based on URL patterns
 const result = await extractor.extract('https://medium.com/@user/article');
@@ -305,7 +305,7 @@ import type {
   Table,
   List,
   Embed
-} from '@content-extractor/core';
+} from '@matthew.ngo/content-extractor';
 
 // All types are fully documented and available
 const options: ExtractionOptions = {
@@ -392,7 +392,7 @@ The library can be used in browser environments:
 
 ```html
 <script type="module">
-  import { contentExtractor } from '@content-extractor/core';
+  import { contentExtractor } from '@matthew.ngo/content-extractor';
   
   // Extract from current page
   const result = await contentExtractor.extractFromCurrentTab();
