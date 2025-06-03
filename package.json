@@ -1,5 +1,5 @@
 {
-  "name": "@content-extractor/core",
+  "name": "@matthew.ngo/content-extractor",
   "version": "1.0.0",
   "description": "A powerful, flexible content extraction library for web pages with support for multiple extraction engines, site-specific adapters, and content analysis",
   "main": "dist/index.js",
