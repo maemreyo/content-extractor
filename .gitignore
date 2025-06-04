@@ -64,3 +64,4 @@ tsconfig.tsbuildinfo
 
 # Vitest
 .vitest-temp/
+vitest.config.ts.**
